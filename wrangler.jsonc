@@ -1,0 +1,10 @@
+// Cloudflare Workers: serve only the Vite build, not the whole repo.
+{
+  "name": "clock",
+  "compatibility_date": "2026-10-16",
+  // The Cloudflare build runs no build step of its own, so Wrangler builds before uploading.
+  "build": { "command": "npm run build" },
+  "assets": { "directory": "./dist" },
+  // Required by `wrangler preview`, which Cloudflare runs for non-production branches.
+  "previews": {}
+}
