@@ -6,6 +6,7 @@ import { handAngles } from './analog.js';
 import { toBinaryColumns } from './binary.js';
 import { toWords } from './words.js';
 import { dragTo } from './dial.js';
+import { moonPhase } from './moon.js';
 
 const at = (hours, minutes, seconds = 0) => new Date(2026, 0, 1, hours, minutes, seconds);
 
@@ -51,4 +52,19 @@ test('dragging the minute hand snaps to 5 minutes and carries the hour across 12
   assert.equal(dragTo(240, 330), 235); // 4:00 → 3:55
   assert.equal(dragTo(0, 330), 715); // 12:00 → 11:55
   assert.equal(dragTo(715, 359), 0); // 11:55 → 12:00
+});
+
+test('dragging the hour hand snaps to whole hours and keeps the minutes', () => {
+  assert.equal(dragTo(180, 120, 'hour'), 240); // 3:00 → 4:00
+  assert.equal(dragTo(225, 112, 'hour'), 225); // grabbing the hand at 3:45 (112.5°) leaves it on 3:45
+  assert.equal(dragTo(225, 140, 'hour'), 285); // 3:45 → 4:45
+  assert.equal(dragTo(30, 5, 'hour'), 30); // 12:30 (15°) nudged back a little stays 12:30
+  assert.equal(dragTo(30, 330, 'hour'), 690); // 12:30 → 11:30
+  assert.equal(dragTo(690, 10, 'hour'), 30); // 11:30 → 12:30
+});
+
+test('moon phase is new at a known new moon and full half a month later', () => {
+  assert.ok(moonPhase(new Date(Date.UTC(2000, 0, 6, 18, 14))) < 0.001);
+  assert.ok(Math.abs(moonPhase(new Date(Date.UTC(2000, 0, 21, 4, 40))) - 0.5) < 0.02); // total lunar eclipse = full moon
+  assert.ok(Math.abs(moonPhase(new Date(Date.UTC(1999, 11, 30))) - 0.74) < 0.01); // before the reference date still lands in 0–1
 });

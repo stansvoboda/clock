@@ -1,85 +1,102 @@
+import { useRef } from 'react';
 import { handAngles } from '../clocks/analog.js';
 
 const MINUTE_LABELS = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, '0'));
 const HOUR_LABELS = [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
 
-// Point on a circle around (cx, cy); 0° is 12 o'clock.
-const polar = (cx, cy, radius, degrees) => {
+// Point on a circle around (150, 150); 0° is 12 o'clock.
+const polar = (radius, degrees) => {
   const rad = (degrees * Math.PI) / 180;
-  return [cx + radius * Math.sin(rad), cy - radius * Math.cos(rad)];
+  return [150 + radius * Math.sin(rad), 150 - radius * Math.cos(rad)];
 };
 
-// Hands are drawn pointing at 12 and rotated by handAngles.
-function Hand({ angle, center, length, color, width }) {
+// Keeps a hand's angle continuous (354° → 360°, not back to 0°), so its transition takes the short way round.
+function useUnwrapped(angle) {
+  const last = useRef(angle);
+  last.current += ((angle - last.current + 540) % 360) - 180;
+  return last.current;
+}
+
+function Hand({ angle, length, tail = 14, width, color, spring }) {
   return (
     <line
-      x1={center} y1={center} x2={center} y2={center - length}
+      x1="150" y1={150 + tail} x2="150" y2={150 - length}
       stroke={color} strokeWidth={width} strokeLinecap="round"
-      transform={`rotate(${angle} ${center} ${center})`}
+      style={{
+        transform: `rotate(${angle}deg)`,
+        transformOrigin: '150px 150px',
+        transition: spring ? 'transform 0.45s var(--spring)' : undefined,
+      }}
     />
   );
 }
 
-// With `onAngle`, pressing or dragging on the dial reports the pointer's angle (0° = 12 o'clock).
-export function BigClock({ date, label, onAngle }) {
-  const { hour, minute } = handAngles(date);
+// The performer: a red-bezelled dial whose bezel counts minutes by fives.
+// With `onAngle`, pressing or dragging on the dial reports the pointer's angle (0° = 12 o'clock) and the
+// hand being turned ('hour' or 'minute'), and the hands spring onto the new time.
+export function Dial({ date, label, onAngle, seconds = false, className = 'w-full h-full' }) {
+  const angles = handAngles(date);
+  const hour = useUnwrapped(angles.hour);
+  const minute = useUnwrapped(angles.minute);
+  const hand = useRef('minute');
+  // Pointer position relative to the dial centre, in fractions of its radius.
+  const locate = (e) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientX - r.left) / (r.width / 2) - 1;
+    const y = 1 - (e.clientY - r.top) / (r.height / 2);
+    return { x, y, distance: Math.hypot(x, y) };
+  };
   const drag = (e) => {
     if (!e.currentTarget.hasPointerCapture(e.pointerId)) return;
-    const r = e.currentTarget.getBoundingClientRect();
-    const degrees = (Math.atan2(e.clientX - r.left - r.width / 2, r.top + r.height / 2 - e.clientY) * 180) / Math.PI;
-    onAngle((degrees + 360) % 360);
+    const { x, y, distance } = locate(e);
+    if (distance < 0.08) return; // under the centre cap the angle is noise
+    onAngle(((Math.atan2(x, y) * 180) / Math.PI + 360) % 360, hand.current);
   };
   const dragProps = onAngle && {
-    className: 'w-full h-full drop-shadow-md cursor-grab active:cursor-grabbing touch-none',
     onPointerDown: (e) => {
       e.currentTarget.setPointerCapture(e.pointerId);
+      // A finger on the inner part of the dial turns the short hour hand, further out the long minute hand.
+      hand.current = locate(e).distance < 0.55 ? 'hour' : 'minute';
       drag(e);
     },
     onPointerMove: drag,
   };
   return (
-    <svg viewBox="0 0 300 300" className="w-full h-full drop-shadow-md" role="img" aria-label={label} {...dragProps}>
-      <circle cx="150" cy="150" r="142" fill="#fff" stroke="#1c1c17" strokeWidth="4" />
-      <circle cx="150" cy="150" r="116" fill="#FFFDF7" stroke="#1c1c17" strokeWidth="2.5" />
-      <g className="font-label font-bold text-[10px] fill-slate-500 select-none" textAnchor="middle" dominantBaseline="central">
+    <svg
+      viewBox="0 0 300 300"
+      className={`${className} ${onAngle ? 'cursor-grab active:cursor-grabbing touch-none' : ''}`}
+      role={label ? 'img' : undefined}
+      aria-label={label || undefined}
+      aria-hidden={label ? undefined : true}
+      {...dragProps}
+    >
+      <circle cx="150" cy="150" r="148" fill="#D2381F" />
+      <g className="font-display font-bold text-[13px] select-none" fill="#FBFAF5" textAnchor="middle" dominantBaseline="central" style={{ fontStretch: '125%' }}>
         {MINUTE_LABELS.map((text, i) => {
-          const [x, y] = polar(150, 150, 130, i * 30);
+          const [x, y] = polar(134, i * 30);
           return <text key={text} x={x} y={y}>{text}</text>;
         })}
       </g>
-      <g className="font-display font-bold text-[22px] fill-[#1c1c17] select-none" textAnchor="middle" dominantBaseline="central">
+      <circle cx="150" cy="150" r="119" fill="#FBFAF5" />
+      {Array.from({ length: 60 }, (_, i) => (
+        <line key={i} x1="150" y1="35" x2="150" y2={i % 5 ? 41 : 49} stroke="#221F2B" strokeWidth={i % 5 ? 1.5 : 4} transform={`rotate(${i * 6} 150 150)`} />
+      ))}
+      <Hand angle={hour} length={58} width={12} color="#D2381F" spring={!!onAngle} />
+      <Hand angle={minute} length={98} width={6} color="#2D5BD2" spring={!!onAngle} />
+      {/* Numerals sit above the hands, haloed in paper, so the minute hand never hides the number it points at. */}
+      <g className="font-display font-extrabold text-[27px] select-none" fill="#221F2B" textAnchor="middle" dominantBaseline="central" stroke="#FBFAF5" strokeWidth="5" strokeLinejoin="round" paintOrder="stroke" style={{ fontStretch: '80%' }}>
         {HOUR_LABELS.map((text, i) => {
-          const [x, y] = polar(150, 150, 96, i * 30);
+          const [x, y] = polar(84, i * 30);
           return <text key={text} x={x} y={y}>{text}</text>;
         })}
       </g>
-      <Hand angle={hour} center={150} length={62} color="#F97316" width={10} />
-      <Hand angle={minute} center={150} length={100} color="#2563EB" width={5} />
-      <circle cx="150" cy="150" r="8" fill="#FACC15" stroke="#1c1c17" strokeWidth="3" />
+      {/* The thin seconds hand goes over the numerals so their paper halo doesn't cut it. */}
+      {seconds && <Hand angle={angles.second} length={106} tail={24} width={2} color="#221F2B" />}
+      <circle cx="150" cy="150" r="9" fill="#221F2B" />
+      <circle cx="150" cy="150" r="3.5" fill="#FBFAF5" />
     </svg>
   );
 }
 
-export function SmallClock({ date, label }) {
-  const { hour, minute, second } = handAngles(date);
-  return (
-    <svg viewBox="0 0 100 100" className="w-28 h-28" role="img" aria-label={label}>
-      <circle cx="50" cy="50" r="46" fill="#fff" stroke="#1c1c17" strokeWidth="3" />
-      <g className="font-display font-bold text-[9px] fill-[#1c1c17] select-none" textAnchor="middle" dominantBaseline="central">
-        <text x="50" y="15">12</text>
-        <text x="85" y="50">3</text>
-        <text x="50" y="85">6</text>
-        <text x="15" y="50">9</text>
-      </g>
-      {HOUR_LABELS.map((h, i) => {
-        const [x1, y1] = polar(50, 50, 44, i * 30);
-        const [x2, y2] = polar(50, 50, 40, i * 30);
-        return <line key={h} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#1c1c17" strokeWidth="1.5" />;
-      })}
-      <Hand angle={hour} center={50} length={22} color="#F97316" width={4} />
-      <Hand angle={minute} center={50} length={32} color="#2563EB" width={2.5} />
-      <Hand angle={second} center={50} length={36} color="#DC2626" width={1.2} />
-      <circle cx="50" cy="50" r="3.5" fill="#FACC15" stroke="#1c1c17" strokeWidth="1.5" />
-    </svg>
-  );
-}
+export const BigClock = (props) => <Dial {...props} />;
+export const SmallClock = ({ className = 'w-36 h-36', ...props }) => <Dial seconds className={className} {...props} />;

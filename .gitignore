@@ -2,3 +2,6 @@
 node_modules/
 .stitch/
 dist/
+.impeccable/
+.github/hooks/
+PONYTAIL-DEBT.md
