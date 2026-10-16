@@ -2,5 +2,9 @@
 {
   "name": "clock",
   "compatibility_date": "2026-10-16",
-  "assets": { "directory": "./dist" }
+  // The Cloudflare build runs no build step of its own, so Wrangler builds before uploading.
+  "build": { "command": "npm run build" },
+  "assets": { "directory": "./dist" },
+  // Required by `wrangler preview`, which Cloudflare runs for non-production branches.
+  "previews": {}
 }
