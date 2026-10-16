@@ -80,7 +80,7 @@ export default function Sundial() {
             </div>
 
             <div ref={stageRef} className="relative w-full h-[320px] md:h-[400px] rounded-2xl chunky-border overflow-hidden bg-gradient-to-b from-sky-200 via-amber-100 to-amber-200" aria-hidden="true">
-              <svg className="absolute w-16 h-16 -translate-x-1/2 -translate-y-1/2 transition-all duration-300" style={{ left: `${sunLeft}%`, top: `${sunTop}%` }} viewBox="0 0 60 60">
+              <svg className="absolute w-16 h-16 -translate-x-1/2 -translate-y-1/2" style={{ left: `${sunLeft}%`, top: `${sunTop}%` }} viewBox="0 0 60 60">
                 <circle cx="30" cy="30" r="20" fill="#FDE047" stroke="#1c1c17" strokeWidth="2.5" />
                 <circle cx="24" cy="27" r="2.5" fill="#1c1c17" />
                 <circle cx="36" cy="27" r="2.5" fill="#1c1c17" />
@@ -94,7 +94,7 @@ export default function Sundial() {
                     <span className="absolute left-1/2 -translate-x-1/2 top-3">XII</span>
                     <span className="absolute right-[16%] top-[38%]">III</span>
                   </div>
-                  <div className="absolute bottom-0 w-3 h-28 bg-slate-900/60 rounded-full origin-bottom transition-transform duration-300" style={{ transform: `rotate(${shadowAngle}deg) scaleY(${shadowLength})` }} />
+                  <div className="absolute bottom-0 w-3 h-28 bg-slate-900/60 rounded-full origin-bottom" style={{ transform: `rotate(${shadowAngle}deg) scaleY(${shadowLength})` }} />
                   <div className="absolute bottom-0 w-4 h-24 bg-amber-900 chunky-border rounded-t-md z-10" />
                   <div className="absolute bottom-0 w-12 h-3 bg-on-surface rounded-t-sm z-10" />
                 </div>
