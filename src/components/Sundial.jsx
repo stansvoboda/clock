@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { prefersReducedMotion, useScrollProgress } from '../scroll.js';
+import { Fact } from './Chapter.jsx';
 
 const PRESETS = [
   ['Ráno', 15],
@@ -66,6 +67,7 @@ export default function Sundial() {
               </div>
               </div>
             ))}
+            <Fact>Proč má hodina 60 minut? Staří Babyloňané počítali v šedesátkové soustavě. Proto má hodina 60 minut, minuta 60 sekund a kruh 360 stupňů.</Fact>
           </div>
 
           <div className="lg:col-span-7 bg-surface-container-lowest chunky-border rounded-3xl p-5 md:p-8 chunky-shadow-lg lg:sticky lg:top-24">

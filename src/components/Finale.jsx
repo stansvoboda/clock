@@ -3,6 +3,10 @@ import { formatDigital } from '../clocks/digital.js';
 import { toBinaryColumns } from '../clocks/binary.js';
 import { toWords } from '../clocks/words.js';
 import { useNow } from '../useNow.js';
+import { CHAPTERS } from './Chapter.jsx';
+
+// Bar length on a log scale of seconds lost per day: 10^-12 s is empty, 10^3 s is full.
+const barWidth = (perDay) => `${((Math.log10(perDay) + 12) / 15) * 100}%`;
 
 function Card({ title, dot, bg, ink, note, children }) {
   return (
@@ -54,6 +58,24 @@ export default function Finale() {
           <Card title="D • Slovy" dot="bg-amber-500" bg="#FED7AA" ink="#7C2D12" note="Jak si čas řekneme, když se potkáme na ulici (zaokrouhleno na 5 minut).">
             <p className="font-display text-2xl xl:text-3xl font-extrabold text-[#9A3412] text-center bg-white py-2 px-3 rounded-xl chunky-border w-full">{words}</p>
           </Card>
+        </div>
+
+        <div className="reveal mt-space-xl max-w-4xl mx-auto bg-surface-container-lowest chunky-border rounded-3xl p-5 md:p-8 chunky-shadow-lg">
+          <h3 className="font-display text-headline-md mb-1">Jak hodiny zpřesňovaly</h3>
+          <p className="text-on-surface-variant mb-6">O kolik se hodiny spletou za den. Každý dílek osy znamená 10× přesnější hodiny.</p>
+          <ol className="flex flex-col gap-3">
+            {CHAPTERS.filter((c) => c.perDay).map((c) => (
+              <li key={c.id} className="grid grid-cols-1 sm:grid-cols-[11rem_1fr] gap-1 sm:gap-4 items-center">
+                <a href={`#${c.id}`} className="font-label text-label-caps hover:text-primary">{c.when} • {c.title}</a>
+                <div className="flex flex-col gap-1">
+                  <div className="h-5 rounded-full chunky-border bg-[repeating-linear-gradient(90deg,transparent_0_calc(100%/15-1px),#1c1c1726_calc(100%/15-1px)_calc(100%/15))]" aria-hidden="true">
+                    <div className="h-full rounded-full border-r-2 border-on-surface" style={{ width: barWidth(c.perDay), backgroundColor: c.bg }} />
+                  </div>
+                  <span className="text-caption text-on-surface-variant">{c.error}</span>
+                </div>
+              </li>
+            ))}
+          </ol>
         </div>
 
         <div className="reveal mt-space-xl text-center max-w-2xl mx-auto">

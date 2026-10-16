@@ -6,6 +6,8 @@ const LINKS = [
   ['ozubena-kola', 'Ozubená kola'],
   ['orloj', 'Orloj'],
   ['kyvadlo', 'Kyvadlo'],
+  ['chronometr', 'Moře'],
+  ['pasma', 'Pásma'],
   ['kremen', 'Křemen'],
   ['atom', 'Atom'],
   ['nauc-se', 'Nauč se'],
@@ -23,14 +25,14 @@ export default function Header() {
           <span className="w-9 h-9 rounded-full bg-primary-container text-on-primary-container chunky-border flex items-center justify-center chunky-shadow-sm shrink-0">
             <span className="icon text-[20px]" aria-hidden="true">schedule</span>
           </span>
-          <span className={chapter ? 'hidden sm:inline' : ''}>Jak lidé měřili čas</span>
+          <span className={`whitespace-nowrap ${chapter ? 'hidden sm:inline' : ''}`}>Jak lidé měřili čas</span>
         </a>
         {chapter && (
-          <span className="lg:hidden font-label text-label-caps bg-amber-300 chunky-border px-3 py-1 rounded-full truncate" aria-hidden="true">
+          <span className="xl:hidden font-label text-label-caps bg-amber-300 chunky-border px-3 py-1 rounded-full truncate" aria-hidden="true">
             {chapter}
           </span>
         )}
-        <nav aria-label="Kapitoly" className="hidden lg:flex items-center gap-5 font-label text-label-caps">
+        <nav aria-label="Kapitoly" className="hidden xl:flex items-center gap-5 font-label text-label-caps">
           {LINKS.map(([id, text]) => (
             <a
               key={id}

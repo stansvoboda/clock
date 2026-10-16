@@ -6,6 +6,7 @@ import { handAngles } from './analog.js';
 import { toBinaryColumns } from './binary.js';
 import { toWords } from './words.js';
 import { dragTo } from './dial.js';
+import { moonPhase } from './moon.js';
 
 const at = (hours, minutes, seconds = 0) => new Date(2026, 0, 1, hours, minutes, seconds);
 
@@ -51,4 +52,10 @@ test('dragging the minute hand snaps to 5 minutes and carries the hour across 12
   assert.equal(dragTo(240, 330), 235); // 4:00 → 3:55
   assert.equal(dragTo(0, 330), 715); // 12:00 → 11:55
   assert.equal(dragTo(715, 359), 0); // 11:55 → 12:00
+});
+
+test('moon phase is new at a known new moon and full half a month later', () => {
+  assert.ok(moonPhase(new Date(Date.UTC(2000, 0, 6, 18, 14))) < 0.001);
+  assert.ok(Math.abs(moonPhase(new Date(Date.UTC(2000, 0, 21, 4, 40))) - 0.5) < 0.02); // total lunar eclipse = full moon
+  assert.ok(Math.abs(moonPhase(new Date(Date.UTC(1999, 11, 30))) - 0.74) < 0.01); // before the reference date still lands in 0–1
 });
