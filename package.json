@@ -1,0 +1,12 @@
+{
+  "name": "clock",
+  "version": "1.0.0",
+  "description": "One time, four ways to show it: digital, analog, binary and words.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "npx serve .",
+    "test": "node --test"
+  },
+  "license": "MIT"
+}

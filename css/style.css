@@ -1,0 +1,168 @@
+:root {
+  --bg: #f4f4f5;
+  --card: #ffffff;
+  --text: #18181b;
+  --muted: #71717a;
+  --accent: #e11d48;
+  --off: #e4e4e7;
+  --radius: 16px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #09090b;
+    --card: #18181b;
+    --text: #fafafa;
+    --muted: #a1a1aa;
+    --accent: #fb7185;
+    --off: #27272a;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 2rem 1rem;
+  font-family: system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+header,
+footer {
+  text-align: center;
+  color: var(--muted);
+}
+
+h1 {
+  margin: 0 0 0.25rem;
+  color: var(--text);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.5rem;
+  max-width: 760px;
+  margin: 2rem auto;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 300px;
+  padding: 1.5rem;
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.1);
+}
+
+.card h2 {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Digital */
+.digital {
+  margin: auto 0;
+  font-family: ui-monospace, monospace;
+  font-size: 3rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Analog */
+.analog {
+  position: relative;
+  width: 200px;
+  aspect-ratio: 1;
+  border: 4px solid var(--text);
+  border-radius: 50%;
+}
+
+/* Hour marks: a conic gradient masked down to a thin outer ring */
+.analog::before {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border-radius: 50%;
+  background: repeating-conic-gradient(var(--muted) 0 2deg, transparent 2deg 30deg);
+  mask: radial-gradient(closest-side, transparent 85%, black 86%);
+  rotate: -1deg;
+}
+
+/* Center pin */
+.analog::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 12px;
+  height: 12px;
+  margin: auto;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.hand {
+  position: absolute;
+  bottom: 50%;
+  left: 50%;
+  border-radius: 4px;
+  background: var(--text);
+  transform-origin: bottom center;
+  translate: -50% 0;
+}
+
+.hour {
+  width: 6px;
+  height: 25%;
+  rotate: var(--hour);
+}
+
+.minute {
+  width: 4px;
+  height: 38%;
+  rotate: var(--minute);
+}
+
+.second {
+  width: 2px;
+  height: 42%;
+  background: var(--accent);
+  rotate: var(--second);
+}
+
+/* Binary */
+.binary {
+  display: grid;
+  grid-template-rows: repeat(4, 24px);
+  grid-auto-columns: 24px;
+  grid-auto-flow: column;
+  gap: 8px;
+  margin: auto 0;
+}
+
+.binary span {
+  border-radius: 50%;
+  background: var(--off);
+}
+
+.binary span.on {
+  background: var(--accent);
+}
+
+/* Words */
+.words {
+  margin: auto 0;
+  font-size: 1.75rem;
+  text-align: center;
+}

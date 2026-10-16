@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Clock Faces</title>
+  <meta name="description" content="One time, four ways to show it: digital, analog, binary and words.">
+  <link rel="stylesheet" href="css/style.css">
+  <script type="module" src="js/main.js"></script>
+</head>
+<body>
+  <header>
+    <h1>Clock Faces</h1>
+    <p>One time, four ways to show it.</p>
+  </header>
+
+  <main class="grid">
+    <section class="card">
+      <h2>Digital</h2>
+      <p id="digital" class="digital">--:--:--</p>
+    </section>
+
+    <section class="card">
+      <h2>Analog</h2>
+      <div id="analog" class="analog" role="img" aria-label="Analog clock">
+        <span class="hand hour"></span>
+        <span class="hand minute"></span>
+        <span class="hand second"></span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Binary</h2>
+      <div id="binary" class="binary" role="img" aria-label="Binary clock: hours, minutes and seconds as 4-bit columns"></div>
+    </section>
+
+    <section class="card">
+      <h2>Words</h2>
+      <p id="words" class="words"></p>
+    </section>
+  </main>
+
+  <footer>
+    <p>Plain HTML, CSS and JavaScript. No frameworks, no build step.</p>
+  </footer>
+</body>
+</html>
