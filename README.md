@@ -12,10 +12,13 @@ Design brief: [brief.md](brief.md). The visual design was generated with [Google
 |---------|--------------|
 | Hero | Live local time. |
 | Slunce a stín | Sundial pinned while the story scrolls; scrolling moves the sun from sunrise to sunset. |
-| Voda, písek a ozubená kola | Milestone cards whose icons drip and spin as they cross the screen. |
+| Voda a písek | Pinned clepsydra drains into the lower bowl as you scroll. |
+| Ozubená kola | A falling weight turns two meshing gears. |
 | Pražský orloj | Stylised astronomical dial; the apostles appear once when it comes into view. |
-| Kyvadlo, křemen a atom | More milestones — and how accurate each one was. |
-| Nauč se číst hodiny | Pinned dial shows each lesson's example as you read it, plus a trainer: set the hands, check the answer. |
+| Kyvadlo | The pendulum swings and every half swing ticks the hand. |
+| Křemen a elektřina | A digital watch lights up one segment at a time. |
+| Atomové hodiny | The atom spins while the caesium number 9 192 631 770 locks in digit by digit. |
+| Nauč se číst hodiny | Pinned dial shows each lesson's example as you read it, plus a trainer: drag the minute hand (or use the buttons), check the answer. |
 | Jeden čas, čtyři podoby | The same moment as digital, analog, binary and Czech words. |
 
 A progress bar and the chapter name in the header show where you are. Scroll effects use CSS scroll-driven animations and IntersectionObserver (no animation library); with `prefers-reduced-motion` they are switched off and all content stays visible.
@@ -46,9 +49,9 @@ npm test
 │   ├── index.css             # Tailwind + chunky outline/shadow styles
 │   ├── useNow.js             # ticks at every full second
 │   ├── clocks/               # pure time → data functions + tests
-│   │   ├── analog.js  binary.js  digital.js  words.js (Czech)
+│   │   ├── analog.js  binary.js  digital.js  words.js (Czech)  dial.js (dragging)
 │   │   └── clocks.test.js
-│   └── components/           # one component per section
+│   └── components/           # one component per section; Chapter.jsx drives the five history chapters
 └── .github/workflows/deploy.yml   # test, build, deploy to GitHub Pages
 ```
 

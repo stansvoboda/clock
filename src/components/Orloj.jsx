@@ -38,7 +38,7 @@ export default function Orloj() {
         <div className="reveal text-center max-w-3xl mx-auto mb-12">
           <div className="inline-flex items-center gap-2 bg-[#FACC15] text-[#1E293B] chunky-border px-4 py-1.5 rounded-full chunky-shadow mb-4">
             <span className="w-2.5 h-2.5 rounded-full bg-[#1E293B]" aria-hidden="true" />
-            <span className="font-label text-label-caps uppercase">Kapitola 3 • Mistr Mikuláš z Kadaně</span>
+            <span className="font-label text-label-caps uppercase">Kapitola 4 • Mistr Mikuláš z Kadaně</span>
           </div>
           <h2 className="font-display text-headline-xl-mobile md:text-headline-xl text-[#FACC15] mb-3">Pražský orloj, 1410</h2>
           <p className="text-body-xl text-slate-300">

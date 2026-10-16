@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useActiveId } from '../scroll.js';
 import { BigClock } from './AnalogClock.jsx';
 import { toWords } from '../clocks/words.js';
+import { dragTo } from '../clocks/dial.js';
 
 const HALF_DAY = 12 * 60;
 const TASK_MINUTES = [0, 15, 30, 45, 10, 20, 40, 50];
@@ -59,6 +60,10 @@ export default function LearnClock() {
     setTime((t) => (t + delta + HALF_DAY) % HALF_DAY);
     setFeedback(null);
   };
+  const drag = (angle) => {
+    setTime((t) => dragTo(t, angle));
+    setFeedback(null);
+  };
   const newTask = () => {
     setTask(randomTask());
     setFeedback(null);
@@ -76,7 +81,7 @@ export default function LearnClock() {
         <div className="reveal text-center max-w-3xl mx-auto mb-12">
           <div className="inline-flex items-center gap-2 bg-primary-container text-on-primary-container chunky-border px-4 py-1.5 rounded-full chunky-shadow mb-3 font-label text-label-caps uppercase">
             <span className="icon text-[18px]" aria-hidden="true">school</span>
-            Kapitola 5 • Škola času
+            Kapitola 8 • Škola času
           </div>
           <h2 className="font-display text-headline-xl-mobile md:text-headline-xl mb-2">Nauč se číst hodiny</h2>
           <p className="text-body-xl text-sky-950">
@@ -121,7 +126,7 @@ export default function LearnClock() {
                 </div>
               </div>
               <div className="w-64 h-64 sm:w-72 sm:h-72 md:w-80 md:h-80 my-2">
-                <BigClock date={date} label={`Ručičkové hodiny ukazují ${words}`} />
+                <BigClock date={date} label={`Ručičkové hodiny ukazují ${words}`} onAngle={drag} />
               </div>
               <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4" aria-live="polite">
                 <div className="bg-surface-container chunky-border rounded-xl p-3 text-center">
@@ -151,7 +156,7 @@ export default function LearnClock() {
               </div>
               {/* On narrow screens the big dial is scrolled away by now, so the trainer gets its own copy. */}
               <div className="lg:hidden w-48 h-48 mx-auto mb-5" aria-hidden="true">
-                <BigClock date={date} label="" />
+                <BigClock date={date} label="" onAngle={drag} />
               </div>
               <div className="flex flex-wrap items-center gap-2 mb-6" role="group" aria-label="Posun ručiček">
                 {ADJUST.map(([text, delta]) => (
@@ -171,7 +176,7 @@ export default function LearnClock() {
                   aria-live="polite"
                   className={`text-sm font-bold ${feedback ? `p-2 rounded-lg chunky-border ${feedback.ok ? 'text-emerald-800 bg-emerald-100' : 'text-amber-900 bg-amber-100'}` : ''}`}
                 >
-                  {feedback ? feedback.text : 'Nastav ručičky tlačítky a stiskni Zkontrolovat.'}
+                  {feedback ? feedback.text : 'Táhni dlouhou ručičku po ciferníku (nebo použij tlačítka) a stiskni Zkontrolovat.'}
                 </p>
               </div>
           </div>

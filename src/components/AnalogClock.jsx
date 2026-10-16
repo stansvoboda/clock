@@ -20,10 +20,25 @@ function Hand({ angle, center, length, color, width }) {
   );
 }
 
-export function BigClock({ date, label }) {
+// With `onAngle`, pressing or dragging on the dial reports the pointer's angle (0° = 12 o'clock).
+export function BigClock({ date, label, onAngle }) {
   const { hour, minute } = handAngles(date);
+  const drag = (e) => {
+    if (!e.currentTarget.hasPointerCapture(e.pointerId)) return;
+    const r = e.currentTarget.getBoundingClientRect();
+    const degrees = (Math.atan2(e.clientX - r.left - r.width / 2, r.top + r.height / 2 - e.clientY) * 180) / Math.PI;
+    onAngle((degrees + 360) % 360);
+  };
+  const dragProps = onAngle && {
+    className: 'w-full h-full drop-shadow-md cursor-grab active:cursor-grabbing touch-none',
+    onPointerDown: (e) => {
+      e.currentTarget.setPointerCapture(e.pointerId);
+      drag(e);
+    },
+    onPointerMove: drag,
+  };
   return (
-    <svg viewBox="0 0 300 300" className="w-full h-full drop-shadow-md" role="img" aria-label={label}>
+    <svg viewBox="0 0 300 300" className="w-full h-full drop-shadow-md" role="img" aria-label={label} {...dragProps}>
       <circle cx="150" cy="150" r="142" fill="#fff" stroke="#1c1c17" strokeWidth="4" />
       <circle cx="150" cy="150" r="116" fill="#FFFDF7" stroke="#1c1c17" strokeWidth="2.5" />
       <g className="font-label font-bold text-[10px] fill-slate-500 select-none" textAnchor="middle" dominantBaseline="central">

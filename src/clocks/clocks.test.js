@@ -5,6 +5,7 @@ import { formatDigital } from './digital.js';
 import { handAngles } from './analog.js';
 import { toBinaryColumns } from './binary.js';
 import { toWords } from './words.js';
+import { dragTo } from './dial.js';
 
 const at = (hours, minutes, seconds = 0) => new Date(2026, 0, 1, hours, minutes, seconds);
 
@@ -42,4 +43,12 @@ test('words speak Czech, count quarters towards the next hour and wrap at twelve
   assert.equal(toWords(at(12, 55)), 'za pět minut jedna');
   assert.equal(toWords(at(11, 58)), 'dvanáct hodin');
   assert.equal(toWords(at(23, 58)), 'dvanáct hodin');
+});
+
+test('dragging the minute hand snaps to 5 minutes and carries the hour across 12', () => {
+  assert.equal(dragTo(180, 92), 195); // 3:00 → 3:15
+  assert.equal(dragTo(235, 0), 240); // 3:55 → 4:00
+  assert.equal(dragTo(240, 330), 235); // 4:00 → 3:55
+  assert.equal(dragTo(0, 330), 715); // 12:00 → 11:55
+  assert.equal(dragTo(715, 359), 0); // 11:55 → 12:00
 });
