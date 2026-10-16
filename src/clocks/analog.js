@@ -10,10 +10,3 @@ export function handAngles(date) {
     second: seconds * 6,
   };
 }
-
-export function updateAnalog(element, date) {
-  const angles = handAngles(date);
-  for (const hand in angles) {
-    element.style.setProperty(`--${hand}`, `${angles[hand]}deg`);
-  }
-}

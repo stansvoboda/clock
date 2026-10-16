@@ -1,10 +1,10 @@
-import { test } from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 
-import { formatDigital } from '../js/clocks/digital.js';
-import { handAngles } from '../js/clocks/analog.js';
-import { toBinaryColumns } from '../js/clocks/binary.js';
-import { toWords } from '../js/clocks/words.js';
+import { formatDigital } from './digital.js';
+import { handAngles } from './analog.js';
+import { toBinaryColumns } from './binary.js';
+import { toWords } from './words.js';
 
 const at = (hours, minutes, seconds = 0) => new Date(2026, 0, 1, hours, minutes, seconds);
 
@@ -27,11 +27,19 @@ test('binary splits each digit into 4 bits', () => {
   assert.deepEqual(columns[5], [true, false, false, true]); // 9
 });
 
-test('words round to five minutes and handle the hour wrap', () => {
-  assert.equal(toWords(at(3, 0)), "three o'clock");
-  assert.equal(toWords(at(3, 14)), 'quarter past three');
-  assert.equal(toWords(at(3, 30)), 'half past three');
-  assert.equal(toWords(at(3, 40)), 'twenty to four');
-  assert.equal(toWords(at(11, 58)), "twelve o'clock");
-  assert.equal(toWords(at(23, 58)), "twelve o'clock");
+test('words speak Czech, count quarters towards the next hour and wrap at twelve', () => {
+  assert.equal(toWords(at(3, 0)), 'tři hodiny');
+  assert.equal(toWords(at(13, 0)), 'jedna hodina');
+  assert.equal(toWords(at(7, 0)), 'sedm hodin');
+  assert.equal(toWords(at(3, 14)), 'čtvrt na čtyři');
+  assert.equal(toWords(at(3, 30)), 'půl čtvrté');
+  assert.equal(toWords(at(7, 30)), 'půl osmé');
+  assert.equal(toWords(at(3, 45)), 'tři čtvrtě na čtyři');
+  assert.equal(toWords(at(12, 15)), 'čtvrt na jednu');
+  assert.equal(toWords(at(12, 30)), 'půl jedné');
+  assert.equal(toWords(at(3, 5)), 'pět minut po třetí');
+  assert.equal(toWords(at(3, 25)), 'za pět minut půl čtvrté');
+  assert.equal(toWords(at(12, 55)), 'za pět minut jedna');
+  assert.equal(toWords(at(11, 58)), 'dvanáct hodin');
+  assert.equal(toWords(at(23, 58)), 'dvanáct hodin');
 });

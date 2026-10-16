@@ -1,29 +1,36 @@
-# Clock Faces
+# Jak lidé měřili čas
 
-One time, four ways to show it. A small frontend project built with plain HTML, CSS and JavaScript — no frameworks, no build step.
+A playful scroll story (in Czech) about the history of timekeeping — from a stick's shadow in ancient Egypt to atomic clocks — that ends by teaching you to read an analog clock.
 
 **Live demo:** https://stansvoboda.github.io/clock/
 
-| Clock   | How it works |
+Design brief: [brief.md](brief.md). The visual design was generated with [Google Stitch](https://stitch.withgoogle.com/) and rebuilt in React.
+
+## Chapters
+
+| Section | What it does |
 |---------|--------------|
-| Digital | Formats hours, minutes and seconds as `HH:MM:SS`. |
-| Analog  | Calculates the angle of each hand and passes it to CSS via custom properties. |
-| Binary  | Splits each digit into 4 bits and lights up the matching dots. |
-| Words   | Rounds to the nearest five minutes, e.g. *"quarter past three"*. |
+| Hero | Live local time. |
+| Slunce a stín | Sundial pinned while the story scrolls; scrolling moves the sun from sunrise to sunset. |
+| Voda, písek a ozubená kola | Milestone cards whose icons drip and spin as they cross the screen. |
+| Pražský orloj | Stylised astronomical dial; the apostles appear once when it comes into view. |
+| Kyvadlo, křemen a atom | More milestones — and how accurate each one was. |
+| Nauč se číst hodiny | Pinned dial shows each lesson's example as you read it, plus a trainer: set the hands, check the answer. |
+| Jeden čas, čtyři podoby | The same moment as digital, analog, binary and Czech words. |
+
+A progress bar and the chapter name in the header show where you are. Scroll effects use CSS scroll-driven animations and IntersectionObserver (no animation library); with `prefers-reduced-motion` they are switched off and all content stays visible.
 
 ## Run locally
 
-ES modules need a web server (opening `index.html` directly won't work):
-
 ```bash
-npm start
-# or
-python3 -m http.server
+npm install
+npm start        # dev server
+npm run build    # production build into dist/
 ```
 
 ## Tests
 
-The time logic lives in pure functions, so it can be tested without a browser:
+The time logic lives in pure functions in `src/clocks/`, tested with Vitest:
 
 ```bash
 npm test
@@ -33,27 +40,21 @@ npm test
 
 ```
 ├── index.html
-├── css/
-│   └── style.css         # layout, light/dark theme, all four clock faces
-├── js/
-│   ├── main.js           # ticks once per second and updates every clock
-│   └── clocks/
-│       ├── digital.js
-│       ├── analog.js
-│       ├── binary.js
-│       └── words.js
-└── tests/
-    └── clocks.test.js    # node:test, no dependencies
+├── brief.md                  # design brief, source for every Stitch prompt
+├── src/
+│   ├── main.jsx, App.jsx
+│   ├── index.css             # Tailwind + chunky outline/shadow styles
+│   ├── useNow.js             # ticks at every full second
+│   ├── clocks/               # pure time → data functions + tests
+│   │   ├── analog.js  binary.js  digital.js  words.js (Czech)
+│   │   └── clocks.test.js
+│   └── components/           # one component per section
+└── .github/workflows/deploy.yml   # test, build, deploy to GitHub Pages
 ```
 
-Each clock module exports a pure function (time → data) and an `update(element, date)` function that renders it.
+## Stack
 
-## What I practised
-
-- Semantic HTML and basic accessibility (`role="img"`, `aria-label`)
-- CSS Grid, custom properties, `conic-gradient` + `mask`, dark mode with `prefers-color-scheme`
-- JavaScript ES modules and separating logic from rendering
-- Unit tests with Node's built-in test runner
+React 18, Vite, Tailwind CSS 3, Vitest.
 
 ## License
 
