@@ -9,13 +9,23 @@ export function useScrollProgress(ref) {
 
   useEffect(() => {
     let frame = 0;
-    const update = () => {
-      frame = 0;
+    let current = null;
+    let last = 0;
+    const update = (time) => {
       const rect = ref.current.getBoundingClientRect();
-      setProgress(Math.min(1, Math.max(0, (innerHeight / 2 - rect.top) / rect.height)));
+      const target = Math.min(1, Math.max(0, (innerHeight / 2 - rect.top) / rect.height));
+      // Ease toward the target (~100 ms, independent of refresh rate) so mouse-wheel steps glide instead of jumping.
+      current = current === null ? target : current + (target - current) * (1 - Math.exp(-(time - last) / 100));
+      if (Math.abs(target - current) < 0.0005) current = target;
+      last = time;
+      setProgress(current);
+      frame = current === target ? 0 : requestAnimationFrame(update);
     };
     const onScroll = () => {
-      frame ||= requestAnimationFrame(update);
+      if (!frame) {
+        last = performance.now();
+        frame = requestAnimationFrame(update);
+      }
     };
     addEventListener('scroll', onScroll, { passive: true });
     return () => {
