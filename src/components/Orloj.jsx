@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { prefersReducedMotion } from '../scroll.js';
 import { useNow } from '../useNow.js';
 import { moonPhase } from '../clocks/moon.js';
-import { Fact } from './Chapter.jsx';
+import { Fact, SceneTitle, Step } from './Chapter.jsx';
+import Icon from './Icon.jsx';
 
 const CARDS = [
   ['Staročeský čas', <>Vnější prstenec se zlatými švabachovými číslicemi 1–24 se během roku natáčí tak, aby 24. hodina vždy padla na <strong>západ slunce</strong>.</>],
@@ -12,12 +13,15 @@ const CARDS = [
 
 // The twelve apostles in the order they pass the two windows of the Prague Orloj, two at a time.
 const APOSTLES = ['Petr', 'Matěj', 'Ondřej', 'Tomáš', 'Juda Tadeáš', 'Šimon', 'Bartoloměj', 'Barnabáš', 'Jakub', 'Pavel', 'Jan', 'Filip'];
-const FACES = ['person', 'face', 'face_2', 'face_3', 'face_4', 'face_5', 'face_6', 'person_2', 'person_3', 'person_4', 'man', 'elderly'];
 const PAIR_MS = 500;
+
+// One context for the whole page: browsers cap how many can exist, and each click used to open a new one.
+let audio;
 
 // Three bell strokes synthesized on the spot, so no audio file is needed.
 function playBells() {
-  const audio = new AudioContext();
+  audio ??= new AudioContext(); // created on the first click, as autoplay rules require a user gesture
+  if (audio.state === 'suspended') audio.resume();
   [0, 0.9, 1.8].forEach((start) => {
     [[392, 0.3], [784, 0.15], [1080, 0.08]].forEach(([frequency, volume]) => {
       const tone = audio.createOscillator();
@@ -31,7 +35,6 @@ function playBells() {
       tone.stop(at + 1.6);
     });
   });
-  setTimeout(() => audio.close(), 4000);
 }
 
 export default function Orloj() {
@@ -72,93 +75,125 @@ export default function Orloj() {
     playBells();
   };
   const shown = [0, 1].map((i) => (pair * 2 + i) % APOSTLES.length);
-  const apostle = `w-10 h-16 bg-amber-400/80 rounded-t-full flex items-center justify-center transition-transform duration-300 ${ringing ? '-translate-y-4 scale-125' : ''}`;
 
   return (
-    <section id="orloj" className="py-space-xl border-t-2 border-on-surface bg-[#0B132B] text-white relative overflow-hidden">
-      <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#FACC15_1px,transparent_1px)] [background-size:24px_24px]" aria-hidden="true" />
-      <div className="max-w-[1380px] mx-auto px-4 md:px-margin relative">
-        <div className="reveal text-center max-w-3xl mx-auto mb-12">
-          <div className="inline-flex items-center gap-2 bg-[#FACC15] text-[#1E293B] chunky-border px-4 py-1.5 rounded-full chunky-shadow mb-4">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#1E293B]" aria-hidden="true" />
-            <span className="font-label text-label-caps uppercase">Kapitola 4 • Mistr Mikuláš z Kadaně</span>
-          </div>
-          <h2 className="font-display text-headline-xl-mobile md:text-headline-xl text-[#FACC15] mb-3">Pražský orloj, 1410</h2>
-          <p className="text-body-xl text-slate-300">
-            Jeden z nejstarších dosud fungujících orlojů na světě. Neukazuje jen běžný čas, ale i pohyb Slunce, fáze Měsíce, zvěrokruh a staročeské hodiny.
-          </p>
-        </div>
+    <section id="orloj" className="py-24 scroll-mt-16">
+      <div className="max-w-stage mx-auto px-4 md:px-8">
+        <SceneTitle title="Pražský orloj" when="1410" number={4} subtitle="Mistr Mikuláš z Kadaně" />
+        <p className="mt-6 text-xl leading-relaxed max-w-[60ch]">
+          Jeden z nejstarších dosud fungujících orlojů na světě. Neukazuje jen běžný čas, ale i pohyb Slunce, fáze Měsíce, zvěrokruh a staročeské hodiny.
+        </p>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-          <div className="lg:col-span-7 bg-[#1E293B] border-[3px] border-[#FACC15] rounded-3xl p-6 md:p-8 chunky-shadow-lg flex flex-col items-center">
-            <div className="flex items-end gap-6 mb-2" aria-hidden="true">
-              <span className={`icon text-4xl text-slate-200 transition-transform duration-300 origin-bottom ${ringing ? (pair % 2 ? 'rotate-12' : '-rotate-12') : ''}`}>skull</span>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-x-12 items-start">
+          <div className="lg:col-span-7 mt-16 lg:sticky lg:top-28 flex flex-col items-center">
+            {/* Death rings the bell while the apostles pass the two windows. */}
+            <div className="flex items-end gap-4 sm:gap-6" aria-hidden="true">
+              <Death swing={ringing ? (pair % 2 ? 12 : -12) : 0} />
               {shown.map((i) => (
-                <div key={i % 2} className="w-16 h-24 rounded-t-full bg-[#0F172A] border-2 border-[#FACC15] flex items-end justify-center pb-2 overflow-hidden">
-                  <div className={apostle}>
-                    <span className="icon text-[#0F172A] text-xl">{FACES[i]}</span>
-                  </div>
+                <div key={i % 2} className="screen hang [--cable:2.5rem] w-20 h-28 sm:w-24 sm:h-32 flex items-end justify-center overflow-hidden">
+                  <Apostle index={i} up={ringing} />
                 </div>
               ))}
-              <span className={`icon text-4xl text-[#FACC15] transition-transform duration-300 ${ringing ? (pair % 2 ? '-rotate-12' : 'rotate-12') : ''}`}>notifications</span>
+              <span className="text-ink transition-transform duration-300" style={{ transform: `rotate(${ringing ? (pair % 2 ? -14 : 14) : 0}deg)` }}>
+                <Icon name="bell" className="w-10 h-10" />
+              </span>
             </div>
-            <p className="mb-6 h-5 font-label text-xs text-[#FACC15]">{ringing ? shown.map((i) => `sv. ${APOSTLES[i]}`).join(' a ') : ''}</p>
+            <p className="mt-3 h-6 font-bold">{ringing ? shown.map((i) => `sv. ${APOSTLES[i]}`).join(' a ') : ''}</p>
 
-            <div ref={dialRef} className="relative w-64 h-64 sm:w-72 sm:h-72 md:w-96 md:h-96 rounded-full border-4 border-[#FACC15] shadow-[0_0_40px_rgba(250,204,21,0.25)] flex items-center justify-center overflow-hidden" role="img" aria-label="Stylizovaný astronomický ciferník Pražského orloje">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_#0369a1_0%,_#0f172a_70%)]" />
-              <div className="absolute w-[75%] h-[75%] rounded-full border border-[#FACC15]/40" />
-              <div className="absolute w-[54%] h-[54%] rounded-full border border-[#FACC15]/50" />
-              <div className="absolute w-[37%] h-[37%] rounded-full border border-[#FACC15]/60" />
-              <div className="absolute w-[21%] h-[21%] rounded-full border border-[#FACC15]/80 bg-[#1E293B]/60" />
-              <div className="absolute w-1/2 h-1/2 rounded-full border-2 border-[#FACC15] translate-x-4 translate-y-3 flex items-center justify-between px-2 text-[#FACC15] text-[10px]">
-                <span>♈</span><span>♋</span><span>♎</span><span>♑</span>
-              </div>
-              <div className="absolute inset-0 flex items-center justify-center" style={{ transform: `rotate(${sunAngle}deg)` }}>
-                <div className="w-1 h-[46%] bg-[#FACC15] mb-[46%] relative flex justify-center">
-                  <span className="icon absolute -top-3 text-[#FACC15] text-2xl drop-shadow-[0_0_8px_#FACC15]">sunny</span>
-                </div>
-              </div>
-              <div className="absolute inset-0 flex items-center justify-center" style={{ transform: `rotate(${moonAngle}deg)` }}>
-                <div className="w-1 h-[37%] bg-slate-300 mb-[37%] relative flex justify-center">
-                  <div className="absolute -top-3 w-5 h-5 rounded-full border border-black bg-gradient-to-r from-amber-100 to-slate-900" />
-                </div>
-              </div>
-              {[['top-2', 'XII'], ['right-3', 'VI'], ['bottom-2', 'XII'], ['left-3', 'VI']].map(([pos, text]) => (
-                <span key={pos} className={`absolute ${pos} font-label text-xs font-bold text-[#FACC15]`}>{text}</span>
-              ))}
-              <div className="w-5 h-5 rounded-full bg-[#FACC15] border-2 border-slate-900 z-10" />
+            <div ref={dialRef} className="mt-4 w-72 h-72 sm:w-96 sm:h-96">
+              <OrlojDial sunAngle={sunAngle} moonAngle={moonAngle} />
             </div>
 
-            <div className="mt-8 flex flex-col items-center">
-              <button
-                type="button"
-                onClick={ring}
-                disabled={ringing}
-                className={`chunky-btn bg-[#FACC15] text-[#1E293B] font-label text-sm px-8 py-3 rounded-xl flex items-center gap-3 font-bold ${ringing ? 'motion-safe:animate-pulse' : ''}`}
-              >
-                <span className="icon text-2xl" aria-hidden="true">notifications_active</span>
+            <div className="mt-8 flex flex-col items-center text-center">
+              <button type="button" onClick={ring} disabled={ringing} className="cue cue-actor text-base px-8">
+                <Icon name="bell" />
                 Odbít orloj
               </button>
-              <p className="mt-2 text-xs font-label text-slate-400" aria-live="polite">
+              <p className="mt-3 text-sm font-bold" aria-live="polite">
                 {ringing ? 'Orloj odbíjí… Bim! Bam! Bim!' : 'Klikni, poslechni si zvony a sleduj apoštoly v okénkách'}
               </p>
             </div>
           </div>
 
-          <div className="lg:col-span-5 flex flex-col gap-5">
-            {CARDS.map(([title, text], i) => (
-              <div key={title} className="reveal bg-[#1E293B] border-2 border-slate-700 hover:border-[#FACC15] transition-colors rounded-2xl p-6 chunky-shadow">
-                <div className="flex items-center gap-3 mb-2">
-                  <span className="w-8 h-8 rounded-lg bg-amber-400/20 text-[#FACC15] border border-[#FACC15] flex items-center justify-center font-bold">{i + 1}</span>
-                  <h3 className="font-display text-headline-sm text-[#FACC15]">{title}</h3>
-                </div>
-                <p className="text-slate-300">{text}</p>
-              </div>
-            ))}
+          <div className="lg:col-span-5">
+            {CARDS.map(([title, text]) => <Step key={title} title={title}>{text}</Step>)}
             <Fact>Podle pověsti dali konšelé orlojníka Hanuše oslepit, aby podobný orloj nepostavil nikde jinde. Ve skutečnosti orloj sestrojil Mikuláš z Kadaně a Hanuš ho jen o 80 let později opravoval.</Fact>
           </div>
         </div>
       </div>
     </section>
+  );
+}
+
+const ROBES = ['#D2381F', '#2D5BD2', '#F4B23E', '#5CC9B0', '#BFA6EE', '#F0935A'];
+
+// A flat cut-out apostle that rises into the window when the orloj strikes.
+function Apostle({ index, up }) {
+  return (
+    <svg viewBox="0 0 60 90" className="w-14 sm:w-16 transition-transform duration-300 ease-out" style={{ transform: up ? 'translateY(0)' : 'translateY(18%)' }}>
+      <path d="M12 90L18 44H42L48 90Z" fill={ROBES[index % ROBES.length]} />
+      <path d="M18 44Q30 36 42 44L40 52H20Z" fill="#221F2B" opacity="0.25" />
+      <circle cx="30" cy="30" r="12" fill="#F2C9A0" />
+      <path d="M17 26Q30 8 43 26Q30 20 17 26Z" fill="#221F2B" />
+    </svg>
+  );
+}
+
+// Death, pulling the bell rope.
+function Death({ swing }) {
+  return (
+    <svg viewBox="0 0 50 90" className="w-12 h-20 transition-transform duration-300 origin-bottom" style={{ transform: `rotate(${swing}deg)` }}>
+      <circle cx="25" cy="16" r="12" fill="#FBFAF5" />
+      <circle cx="20" cy="15" r="3" fill="#221F2B" />
+      <circle cx="30" cy="15" r="3" fill="#221F2B" />
+      <rect x="20" y="24" width="10" height="5" fill="#FBFAF5" />
+      <path d="M25 30V62M14 38H36M16 44H34M17 50H33M25 62L16 88M25 62L34 88M36 38L44 20" stroke="#FBFAF5" strokeWidth="3" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+// U+FE0E asks for the text glyph, not the emoji tile.
+const ZODIAC = [['♈\uFE0E', 0], ['♋\uFE0E', 90], ['♎\uFE0E', 180], ['♑\uFE0E', 270]];
+
+// Stylised astronomical dial: day sky above, dusk and night below the horizon, the zodiac ring off centre.
+function OrlojDial({ sunAngle, moonAngle }) {
+  const rotate = (angle) => ({ transform: `rotate(${angle}deg)`, transformOrigin: '150px 150px' });
+  return (
+    <svg viewBox="0 0 300 300" className="w-full h-full drop-shadow-[0_24px_24px_rgb(34_31_43_/_0.35)]" role="img" aria-label="Stylizovaný astronomický ciferník Pražského orloje">
+      <clipPath id="orloj-sky"><circle cx="150" cy="150" r="128" /></clipPath>
+      <circle cx="150" cy="150" r="148" fill="#F4B23E" />
+      {Array.from({ length: 24 }, (_, i) => (
+        <line key={i} x1="150" y1="4" x2="150" y2="16" stroke="#221F2B" strokeWidth="2" transform={`rotate(${i * 15} 150 150)`} />
+      ))}
+      <g clipPath="url(#orloj-sky)">
+        <rect width="300" height="300" fill="#4A86D0" />
+        <circle cx="150" cy="268" r="122" fill="#8A5A3B" />
+        <circle cx="150" cy="280" r="104" fill="#221F2B" />
+      </g>
+      {[96, 66, 38].map((r) => <circle key={r} cx="150" cy="150" r={r} fill="none" stroke="#F7D154" strokeWidth="1.2" opacity="0.7" />)}
+      <circle cx="162" cy="160" r="74" fill="none" stroke="#F7D154" strokeWidth="3" />
+      <g fill="#F7D154" fontSize="14" textAnchor="middle" dominantBaseline="central">
+        {ZODIAC.map(([sign, angle]) => {
+          const rad = (angle * Math.PI) / 180;
+          return <text key={sign} x={162 + 74 * Math.sin(rad)} y={160 - 74 * Math.cos(rad)}>{sign}</text>;
+        })}
+      </g>
+      <g className="wide font-bold" fontSize="12" fill="#F7D154" textAnchor="middle" dominantBaseline="central">
+        <text x="150" y="34">XII</text>
+        <text x="266" y="150">VI</text>
+        <text x="150" y="266">XII</text>
+        <text x="34" y="150">VI</text>
+      </g>
+      <g style={rotate(moonAngle)}>
+        <line x1="150" y1="150" x2="150" y2="68" stroke="#C9C6D2" strokeWidth="3" />
+        <circle cx="150" cy="60" r="10" fill="#221F2B" stroke="#C9C6D2" strokeWidth="2" />
+        <path d="M150 50A10 10 0 0 1 150 70Z" fill="#FBFAF5" />
+      </g>
+      <g style={rotate(sunAngle)}>
+        <line x1="150" y1="150" x2="150" y2="22" stroke="#F7D154" strokeWidth="4" />
+        <circle cx="150" cy="40" r="11" fill="#F7D154" />
+      </g>
+      <circle cx="150" cy="150" r="9" fill="#F4B23E" stroke="#221F2B" strokeWidth="2" />
+    </svg>
   );
 }

@@ -54,6 +54,15 @@ test('dragging the minute hand snaps to 5 minutes and carries the hour across 12
   assert.equal(dragTo(715, 359), 0); // 11:55 → 12:00
 });
 
+test('dragging the hour hand snaps to whole hours and keeps the minutes', () => {
+  assert.equal(dragTo(180, 120, 'hour'), 240); // 3:00 → 4:00
+  assert.equal(dragTo(225, 112, 'hour'), 225); // grabbing the hand at 3:45 (112.5°) leaves it on 3:45
+  assert.equal(dragTo(225, 140, 'hour'), 285); // 3:45 → 4:45
+  assert.equal(dragTo(30, 5, 'hour'), 30); // 12:30 (15°) nudged back a little stays 12:30
+  assert.equal(dragTo(30, 330, 'hour'), 690); // 12:30 → 11:30
+  assert.equal(dragTo(690, 10, 'hour'), 30); // 11:30 → 12:30
+});
+
 test('moon phase is new at a known new moon and full half a month later', () => {
   assert.ok(moonPhase(new Date(Date.UTC(2000, 0, 6, 18, 14))) < 0.001);
   assert.ok(Math.abs(moonPhase(new Date(Date.UTC(2000, 0, 21, 4, 40))) - 0.5) < 0.02); // total lunar eclipse = full moon

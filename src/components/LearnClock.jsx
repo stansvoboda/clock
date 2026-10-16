@@ -1,25 +1,27 @@
-import { useEffect, useState } from 'react';
-import { useActiveId } from '../scroll.js';
-import { BigClock } from './AnalogClock.jsx';
+import { useEffect, useRef, useState } from 'react';
+import { prefersReducedMotion, useActiveId } from '../scroll.js';
+import { BigClock, Dial } from './AnalogClock.jsx';
+import { SceneTitle } from './Chapter.jsx';
+import Icon from './Icon.jsx';
 import { toWords } from '../clocks/words.js';
 import { dragTo } from '../clocks/dial.js';
+import { diagnose, label, lessonFor, taskText } from '../clocks/quiz.js';
 
 const HALF_DAY = 12 * 60;
 const TASK_MINUTES = [0, 15, 30, 45, 10, 20, 40, 50];
 
 // Time on the lesson dial is kept as minutes after 12:00 (0–719).
 const toDate = (total) => new Date(2026, 0, 1, Math.floor(total / 60), total % 60);
-const label = (total) => `${Math.floor(total / 60) || 12}:${String(total % 60).padStart(2, '0')}`;
 const randomTask = () =>
   Math.floor(Math.random() * 12) * 60 + TASK_MINUTES[Math.floor(Math.random() * TASK_MINUTES.length)];
 
 const LESSONS = [
-  ['Krátká tlustá ručička = HODINY', 'Pohybuje se pomalu. Za celý den oběhne ciferník dvakrát (2 × 12 = 24 hodin).', 'bg-orange-500 text-white', 'text-orange-600', 180],
-  ['Dlouhá štíhlá ručička = MINUTY', 'Pohybuje se rychleji. Za jednu hodinu oběhne celý kruh (60 minut).', 'bg-blue-600 text-white', 'text-blue-600', 180],
-  ['Celá hodina (např. 3:00)', <>Dlouhá modrá ručička míří <strong>přesně nahoru na 12</strong>. Krátká ukazuje hodinu: „tři hodiny“.</>, 'bg-amber-400', '', 180],
-  ['Půl (např. 3:30 = půl čtvrté)', <>Dlouhá ručička míří <strong>dolů na 6</strong>. Krátká je v půli cesty mezi 3 a 4 — proto česky říkáme <strong>půl čtvrté</strong>, ne „půl třetí“.</>, 'bg-amber-400', '', 210],
-  ['Čtvrt a tři čtvrtě', <>3:15 je <strong>čtvrt na čtyři</strong> (dlouhá ručička na 3). 3:45 je <strong>tři čtvrtě na čtyři</strong> (dlouhá ručička na 9).</>, 'bg-amber-400', '', 195],
-  ['Minuty po pěti', 'Každé číslo na ciferníku znamená 5 minut: na 1 je 5 minut, na 2 je 10 minut, na 4 je 20 minut…', 'bg-amber-400', '', 200],
+  ['Krátká tlustá ručička = HODINY', 'Pohybuje se pomalu. Za celý den oběhne ciferník dvakrát (2 × 12 = 24 hodin).', 'text-[#A52A15]', 180],
+  ['Dlouhá štíhlá ručička = MINUTY', 'Pohybuje se rychleji. Za jednu hodinu oběhne celý kruh (60 minut).', 'text-[#1F3F99]', 180],
+  ['Celá hodina (např. 3:00)', <>Dlouhá modrá ručička míří <strong>přesně nahoru na 12</strong>. Krátká ukazuje hodinu: „tři hodiny“.</>, '', 180],
+  ['Půl (např. 3:30 = půl čtvrté)', <>Dlouhá ručička míří <strong>dolů na 6</strong>. Krátká je v půli cesty mezi 3 a 4 — proto česky říkáme <strong>půl čtvrté</strong>, ne „půl třetí“.</>, '', 210],
+  ['Čtvrt a tři čtvrtě', <>3:15 je <strong>čtvrt na čtyři</strong> (dlouhá ručička na 3). 3:45 je <strong>tři čtvrtě na čtyři</strong> (dlouhá ručička na 9).</>, '', 195],
+  ['Minuty po pěti', 'Každé číslo na ciferníku znamená 5 minut: na 1 je 5 minut, na 2 je 10 minut, na 4 je 20 minut…', '', 200],
 ];
 // Each lesson shows its example on the dial (minutes after 12:00) as you read it.
 const LESSON_IDS = LESSONS.map((_, i) => `lekce-${i + 1}`);
@@ -31,25 +33,31 @@ const DEMOS = [
   ['Tři čtvrtě', 225],
 ];
 
+// Swatches echo the hands: short thick red for hours, long thin blue for minutes.
+const HOUR_SWATCH = 'w-4 h-2.5 bg-actor';
+const MINUTE_SWATCH = 'w-6 h-1.5 bg-film';
 const ADJUST = [
-  ['−1 hod', -60],
-  ['+1 hod', 60],
-  ['−5 min', -5],
-  ['+5 min', 5],
-  ['+15 min', 15],
+  ['−1 hod', -60, HOUR_SWATCH],
+  ['+1 hod', 60, HOUR_SWATCH],
+  ['−5 min', -5, MINUTE_SWATCH],
+  ['+5 min', 5, MINUTE_SWATCH],
+  ['+15 min', 15, MINUTE_SWATCH],
 ];
 
 export default function LearnClock() {
   const [time, setTime] = useState(180); // 3:00
   const [task, setTask] = useState(465); // 7:45
+  const [round, setRound] = useState(0); // odd rounds ask in Czech words
+  const [misses, setMisses] = useState(0);
   const [feedback, setFeedback] = useState(null);
+  const bigDial = useRef(null);
 
   // On wide screens the dial is pinned next to the lessons, so it follows the lesson being read.
   // On narrow screens it sits below them, where jumping times would only confuse.
   const activeLesson = useActiveId(LESSON_IDS);
   useEffect(() => {
     if (activeLesson && window.matchMedia('(min-width: 1024px)').matches) {
-      setTime(LESSONS[LESSON_IDS.indexOf(activeLesson)][4]);
+      setTime(LESSONS[LESSON_IDS.indexOf(activeLesson)][3]);
       setFeedback(null);
     }
   }, [activeLesson]);
@@ -60,125 +68,126 @@ export default function LearnClock() {
     setTime((t) => (t + delta + HALF_DAY) % HALF_DAY);
     setFeedback(null);
   };
-  const drag = (angle) => {
-    setTime((t) => dragTo(t, angle));
+  const drag = (angle, hand) => {
+    setTime((t) => dragTo(t, angle, hand));
     setFeedback(null);
+  };
+  // Below lg the big dial sits under the demo buttons, so bring it into view when a demo moves it.
+  const demo = (value) => {
+    adjust(value - time);
+    if (!window.matchMedia('(min-width: 1024px)').matches) {
+      bigDial.current.scrollIntoView({ block: 'nearest', behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+    }
   };
   const newTask = () => {
     setTask(randomTask());
+    setRound((r) => r + 1);
+    setMisses(0);
     setFeedback(null);
   };
-  const check = () =>
-    setFeedback(
-      time === task
-        ? { ok: true, text: `Výborně! Je ${toWords(toDate(task))}. Čas máš v malíčku.` }
-        : { ok: false, text: `Ještě ne. Teď máš nastaveno ${label(time)}, hledáme ${label(task)}.` },
-    );
+  const check = () => {
+    const hint = diagnose(time, task);
+    if (hint) setMisses((m) => m + 1);
+    setFeedback(hint ? { ok: false, text: hint } : { ok: true, text: `Výborně! ${label(task)} je ${toWords(toDate(task))}.` });
+  };
+  const lesson = lessonFor(task);
 
   return (
-    <section id="nauc-se" className="py-space-xl border-t-2 border-on-surface bg-[#38BDF8]">
-      <div className="max-w-[1380px] mx-auto px-4 md:px-margin">
-        <div className="reveal text-center max-w-3xl mx-auto mb-12">
-          <div className="inline-flex items-center gap-2 bg-primary-container text-on-primary-container chunky-border px-4 py-1.5 rounded-full chunky-shadow mb-3 font-label text-label-caps uppercase">
-            <span className="icon text-[18px]" aria-hidden="true">school</span>
-            Kapitola 8 • Škola času
-          </div>
-          <h2 className="font-display text-headline-xl-mobile md:text-headline-xl mb-2">Nauč se číst hodiny</h2>
-          <p className="text-body-xl text-sky-950">
-            Atomové hodiny řídí družice, ale na zdi, ve škole i na nádraží pořád visí ručičky. Za pět minut je přečteš — a pak si to vyzkoušíš v trenažéru.
-          </p>
-        </div>
+    <section id="nauc-se" className="py-24 scroll-mt-16">
+      <div className="max-w-stage mx-auto px-4 md:px-8">
+        <SceneTitle title="Nauč se číst hodiny" number={10} subtitle="Škola času" />
+        <p className="mt-6 text-xl leading-relaxed max-w-[60ch]">
+          Atomové hodiny řídí družice, ale na zdi, ve škole i na nádraží pořád visí ručičky. Za pět minut je přečteš — a pak si to vyzkoušíš v trenažéru.
+        </p>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          <div className="lg:col-span-5 lg:row-start-1 flex flex-col gap-4">
-            <h3 className="font-display text-headline-sm">Lekce krok za krokem</h3>
-            <ol className="flex flex-col gap-4 lg:gap-20">
-              {LESSONS.map(([title, text, badge, color], i) => (
-                <li key={i} id={LESSON_IDS[i]} className="reveal bg-surface-container-lowest chunky-border rounded-xl p-4 chunky-shadow flex items-start gap-3">
-                  <span className={`w-7 h-7 rounded-full font-bold flex items-center justify-center shrink-0 text-sm ${badge}`}>{i + 1}</span>
-                  <div>
-                    <h4 className={`font-display text-base font-bold ${color}`}>{title}</h4>
-                    <p className="text-sm text-on-surface-variant">{text}</p>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-x-12 items-start">
+          <div className="lg:col-span-5 lg:row-start-1">
+            <h3 className="font-display font-extrabold text-2xl mt-12">Lekce krok za krokem</h3>
+            <ol className="flex flex-col lg:gap-16">
+              {LESSONS.map(([title, text, color, example], i) => (
+                <li key={i} id={LESSON_IDS[i]} className="pt-10 max-w-[40ch] scroll-mt-20">
+                  <h4 className={`font-display font-extrabold text-2xl leading-tight mb-1 ${color}`}>{title}</h4>
+                  <p className="text-lg leading-relaxed">{text}</p>
+                  {/* Below lg the big dial is far away, so each lesson carries its own example. */}
+                  <div className="lg:hidden w-40 h-40 sm:w-48 sm:h-48 mt-4 drop-shadow-[0_24px_24px_rgb(34_31_43_/_0.35)]">
+                    <Dial date={toDate(example)} label={`Hodiny ukazují ${toWords(toDate(example))}`} />
                   </div>
                 </li>
               ))}
             </ol>
-            <div className="mt-2 pt-3 border-t-2 border-sky-700/40">
-              <p className="font-label text-xs block mb-2 uppercase">Klikni a předveď na hodinách:</p>
-              <div className="grid grid-cols-2 gap-2">
+            <div className="mt-10 pt-4 border-t-2 border-ink">
+              <p className="font-bold mb-3">Klikni a předveď na hodinách:</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {DEMOS.map(([name, value]) => (
-                  <button key={name} type="button" onClick={() => adjust(value - time)} className="chunky-btn bg-surface-container-lowest font-label text-xs py-2 px-3 rounded-lg text-left flex items-center justify-between">
+                  <button key={name} type="button" onClick={() => demo(value)} className="cue justify-between normal-case">
                     Ukaž: {name} ({label(value)})
-                    <span className="icon text-sm" aria-hidden="true">arrow_forward</span>
+                    <Icon name="right" className="w-4 h-4" />
                   </button>
                 ))}
               </div>
             </div>
           </div>
 
-          <div className="lg:col-start-6 lg:col-span-7 lg:row-start-1 lg:row-span-2 lg:sticky lg:top-24">
-            <div className="bg-surface-container-lowest chunky-border rounded-3xl p-5 md:p-8 chunky-shadow-lg flex flex-col items-center">
-              <div className="w-full flex justify-between items-center pb-3 mb-4 border-b-2 border-on-surface">
-                <span className="font-label text-label-caps text-primary uppercase">Interaktivní ciferník</span>
-                <div className="flex items-center gap-4 text-xs font-label" aria-hidden="true">
-                  <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-orange-500" /> Hodiny</span>
-                  <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-blue-600" /> Minuty</span>
-                </div>
+          {/* The performer steps out of the film: this dial is the child's to move. */}
+          <div ref={bigDial} className="lg:col-start-6 lg:col-span-7 lg:row-start-1 lg:row-span-2 lg:sticky lg:top-24 mt-16 flex flex-col items-center scroll-mb-4">
+            <div className="w-72 h-72 sm:w-[26rem] sm:h-[26rem] drop-shadow-[0_28px_28px_rgb(34_31_43_/_0.35)]">
+              <BigClock date={date} label={`Ručičkové hodiny ukazují ${words}`} onAngle={drag} />
+            </div>
+            <div className="mt-4 flex items-center gap-6 text-sm font-bold" aria-hidden="true">
+              <span className="flex items-center gap-2"><span className="w-6 h-2.5 bg-actor" /> Hodiny</span>
+              <span className="flex items-center gap-2"><span className="w-8 h-1.5 bg-film" /> Minuty</span>
+            </div>
+            <div className="w-full mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="surtitle text-center py-3">
+                <span className="text-sm opacity-80">Slovy česky</span>
+                <p className="font-display font-extrabold text-2xl mt-1">{words}</p>
               </div>
-              <div className="w-64 h-64 sm:w-72 sm:h-72 md:w-80 md:h-80 my-2">
-                <BigClock date={date} label={`Ručičkové hodiny ukazují ${words}`} onAngle={drag} />
-              </div>
-              <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4" aria-live="polite">
-                <div className="bg-surface-container chunky-border rounded-xl p-3 text-center">
-                  <span className="text-xs font-label text-on-surface-variant uppercase">Slovy česky</span>
-                  <p className="font-display text-headline-sm text-primary font-bold mt-1">{words}</p>
-                </div>
-                <div className="bg-surface-container chunky-border rounded-xl p-3 text-center">
-                  <span className="text-xs font-label text-on-surface-variant uppercase">Digitálně (ráno / odpoledne)</span>
-                  <p className="font-label text-2xl font-bold mt-1">
-                    {label(time)} <span className="text-sm text-on-surface-variant font-normal">/ {label(time + HALF_DAY)}</span>
-                  </p>
-                </div>
+              <div className="surtitle text-center py-3">
+                <span className="text-sm opacity-80">Digitálně (ráno / odpoledne)</span>
+                <p className="wide text-2xl mt-1 tabular-nums">
+                  {label(time)} <span className="text-base opacity-75">/ {label(time + HALF_DAY)}</span>
+                </p>
               </div>
             </div>
           </div>
 
-          <div className="lg:col-start-1 lg:col-span-5 lg:row-start-2 bg-surface-container-highest chunky-border rounded-3xl p-5 md:p-8 chunky-shadow">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-4 mb-5 border-b-2 border-on-surface">
+          <div className="lg:col-start-1 lg:col-span-5 lg:row-start-2 mt-20">
+            <div className="screen hang p-6 sm:p-8 [--cable:4rem]">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3 pb-4 mb-5 border-b-2 border-ink">
                 <div>
-                  <span className="font-label text-label-caps text-primary uppercase">Cvičení</span>
-                  <h3 className="font-display text-headline-md">Zkus to sám!</h3>
+                  <h3 className="cond text-5xl">Zkus to sám!</h3>
+                  <p className="text-sm mt-1">Cvičení</p>
                 </div>
-                <p className="flex items-center gap-2 bg-amber-300 chunky-border px-3.5 py-1.5 rounded-xl chunky-shadow-sm font-label text-sm font-bold">
-                  <span className="icon text-lg" aria-hidden="true">flag</span>
-                  Úkol: Nastav {label(task)}
-                </p>
+                <p className="bg-actor text-white px-3 py-1.5 font-display font-extrabold text-lg">Úkol: Nastav {taskText(task, round % 2 === 1)}</p>
               </div>
               {/* On narrow screens the big dial is scrolled away by now, so the trainer gets its own copy. */}
-              <div className="lg:hidden w-48 h-48 mx-auto mb-5" aria-hidden="true">
+              <div className="lg:hidden w-64 h-64 min-[400px]:w-72 min-[400px]:h-72 sm:w-80 sm:h-80 mx-auto mb-5" aria-hidden="true">
                 <BigClock date={date} label="" onAngle={drag} />
               </div>
               <div className="flex flex-wrap items-center gap-2 mb-6" role="group" aria-label="Posun ručiček">
-                {ADJUST.map(([text, delta]) => (
-                  <button key={text} type="button" onClick={() => adjust(delta)} className="chunky-btn bg-surface-container-lowest px-3 py-2 rounded-lg font-label text-xs">
-                    {text}
+                {ADJUST.map(([text, delta, swatch]) => (
+                  <button key={text} type="button" onClick={() => adjust(delta)} className="cue normal-case font-body text-base tracking-normal tabular-nums">
+                    <span className={swatch} aria-hidden="true" /> {text}
                   </button>
                 ))}
-                <button type="button" onClick={newTask} className="chunky-btn bg-sky-200 text-sky-900 sm:ml-auto px-3 py-2 rounded-lg font-label text-xs flex items-center gap-1">
-                  <span className="icon text-sm" aria-hidden="true">shuffle</span> Nový úkol
+                <button type="button" onClick={newTask} className="cue normal-case sm:ml-auto">
+                  <Icon name="shuffle" className="w-4 h-4" /> Nový úkol
                 </button>
               </div>
-              <div className="flex flex-col sm:flex-row items-center gap-4">
-                <button type="button" onClick={check} className="chunky-btn bg-primary-container text-on-primary font-display text-headline-sm px-6 py-3 rounded-xl w-full sm:w-auto whitespace-nowrap">
-                  Zkontrolovat ✨
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+                <button type="button" onClick={check} className="cue cue-actor text-base px-8 py-3 whitespace-nowrap">
+                  Zkontrolovat
                 </button>
-                <p
-                  aria-live="polite"
-                  className={`text-sm font-bold ${feedback ? `p-2 rounded-lg chunky-border ${feedback.ok ? 'text-emerald-800 bg-emerald-100' : 'text-amber-900 bg-amber-100'}` : ''}`}
-                >
-                  {feedback ? feedback.text : 'Táhni dlouhou ručičku po ciferníku (nebo použij tlačítka) a stiskni Zkontrolovat.'}
+                <p aria-live="polite" className={`font-bold ${feedback ? `px-3 py-2 ${feedback.ok ? 'bg-[#92DB97]' : 'bg-[#F7D154]'}` : ''}`}>
+                  {feedback ? feedback.text : 'Táhni prstem po ciferníku: u kraje točíš dlouhou ručičkou, blíž středu krátkou. Pak stiskni Zkontrolovat.'}
+                  {feedback && !feedback.ok && misses >= 2 && (
+                    <a href={`#${LESSON_IDS[lesson]}`} className="block mt-1 underline underline-offset-4">
+                      Nápověda: lekce „{LESSONS[lesson][0]}“
+                    </a>
+                  )}
                 </p>
               </div>
+            </div>
           </div>
         </div>
       </div>
