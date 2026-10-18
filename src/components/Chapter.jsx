@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { prefersReducedMotion, useScrollProgress } from '../scroll.js';
+import { GearsArt, PendulumArt } from './Mechanisms.jsx';
 
 const INK = '#221F2B';
 
@@ -23,50 +24,6 @@ function WaterArt({ p }) {
       <g clipPath="url(#lower)">
         <rect x="40" y="150" width="120" height="50" fill="#2D5BD2" style={{ ...fill, transform: `scaleY(${0.1 + p * 0.8})` }} />
       </g>
-    </svg>
-  );
-}
-
-function Gear({ cx, cy, r, teeth, angle, color }) {
-  return (
-    <g style={{ transform: `rotate(${angle}deg)`, transformOrigin: `${cx}px ${cy}px` }}>
-      {Array.from({ length: teeth }, (_, i) => (
-        <rect key={i} x={cx - 6} y={cy - r - 10} width="12" height="16" rx="2" fill={color} stroke={INK} strokeWidth="3" transform={`rotate(${(360 / teeth) * i} ${cx} ${cy})`} />
-      ))}
-      <circle cx={cx} cy={cy} r={r} fill={color} stroke={INK} strokeWidth="3" />
-      <circle cx={cx} cy={cy} r={r * 0.3} fill="#FBFAF5" stroke={INK} strokeWidth="3" />
-    </g>
-  );
-}
-
-function GearsArt({ p }) {
-  // The falling weight turns the big gear; the small one meshes and turns the other way, faster.
-  const turn = p * 360;
-  return (
-    <svg viewBox="0 0 200 220" className="w-full h-full">
-      <line x1="40" y1="70" x2="40" y2={110 + p * 70} stroke={INK} strokeWidth="3" />
-      <rect x="26" y={110 + p * 70} width="28" height="30" rx="4" fill="#221F2B" stroke={INK} strokeWidth="3" />
-      <Gear cx={75} cy={70} r={40} teeth={12} angle={turn} color="#D2381F" />
-      <Gear cx={147} cy={124} r={24} teeth={7} angle={-turn * (12 / 7) + 13} color="#F4B23E" />
-    </svg>
-  );
-}
-
-function PendulumArt({ p }) {
-  // Eight full swings over the chapter; every half swing ticks the hand one step.
-  const swing = 22 * Math.sin(p * 16 * Math.PI);
-  const ticks = Math.floor(p * 16);
-  return (
-    <svg viewBox="0 0 200 220" className="w-full h-full">
-      <circle cx="100" cy="60" r="44" fill="#FBFAF5" stroke={INK} strokeWidth="3" />
-      {Array.from({ length: 12 }, (_, i) => <line key={i} x1="100" y1="20" x2="100" y2="27" stroke={INK} strokeWidth="3" transform={`rotate(${i * 30} 100 60)`} />)}
-      <line x1="100" y1="60" x2="100" y2="26" stroke="#D2381F" strokeWidth="3" strokeLinecap="round" style={{ transform: `rotate(${ticks * 6}deg)`, transformOrigin: '100px 60px' }} />
-      <circle cx="100" cy="60" r="5" fill={INK} />
-      <g style={{ transform: `rotate(${swing}deg)`, transformOrigin: '100px 108px' }}>
-        <line x1="100" y1="108" x2="100" y2="186" stroke={INK} strokeWidth="3" />
-        <circle cx="100" cy="192" r="16" fill="#D2381F" stroke={INK} strokeWidth="3" />
-      </g>
-      <circle cx="100" cy="108" r="5" fill={INK} />
     </svg>
   );
 }
@@ -238,7 +195,7 @@ export const CHAPTERS = [
     bg: '#F29AAA', subtitle: 'Z minut na sekundy',
     steps: [
       ['Pořád stejně dlouho', 'Galileo Galilei si všiml, že kyvadlo se houpe pořád stejně dlouho — ať kmitá trochu víc, nebo trochu míň.'],
-      ['Huygensovy hodiny', 'Christiaan Huygens v roce 1656 postavil první kyvadlové hodiny. Každý kyv pustí ozubené kolo o jeden zub dál.'],
+      ['Huygensovy hodiny', 'Christiaan Huygens v roce 1656 postavil první kyvadlové hodiny. Každý kyv pustí ozubené kolo o půl zubu dál.'],
       ['Najednou přesně', 'Chyba klesla z mnoha minut na pár sekund denně. Hodiny konečně dostaly i minutovou ručičku.'],
     ],
     fact: 'Kyvadlo dlouhé skoro přesně 1 metr udělá jeden kyv za 1 sekundu. Říká se mu sekundové kyvadlo.',
