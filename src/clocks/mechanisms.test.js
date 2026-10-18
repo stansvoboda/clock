@@ -2,6 +2,7 @@ import { test } from 'vitest';
 import assert from 'node:assert/strict';
 
 import { gearPath, meshAngle, meshCentre, pitchRadius, steps } from './gear.js';
+import { hourLineAngle } from './sundial.js';
 
 // Gear outline as points in the drawing, turned by `angle` and moved to x y.
 function outline(m, z, x, y, angle) {
@@ -49,4 +50,11 @@ test('the escapement steps once per beat and rests in between', () => {
   assert.equal(steps(1), 0.5);
   assert.equal(steps(1.5), 1);
   assert.equal(steps(3.4), 3);
+});
+
+test('a Prague wall sundial spreads its hour lines unevenly, morning to the left', () => {
+  const round = (x) => Math.round(x * 10) / 10;
+  assert.equal(hourLineAngle(12), 0);
+  assert.deepEqual([13, 14, 15, 16, 17].map((h) => round(hourLineAngle(h))), [9.8, 20.3, 32.7, 48, 67.3]);
+  assert.equal(round(hourLineAngle(9)), -32.7);
 });

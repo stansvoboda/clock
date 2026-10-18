@@ -65,9 +65,9 @@ Návrhová větev `clock-mechanisms`. Živé náčrty s posuvníkem: `npm start`
 
 **Návrh:** `BalanceArt` (setrvačka ±150° a vlásek, jehož závity se spolu s ní stahují a povolují). Šla by vložit do lodi místo ciferníku, nebo vedle něj jako „pohled dovnitř“.
 
-## 4. Slunce a stín — chyba v ciferníku
+## 4. Slunce a stín — přepracováno
 
-**Teď:** slunce jde zleva doprava, tedy díváme se na jih a východ je vlevo. Ráno proto stín ukazuje doprava, kde je ale napsáno **III**, a odpoledne doleva na **IX**. Ranní stín tedy ukazuje odpolední hodinu. Navíc v poledne stín míří nahoru, směrem ke slunci.
+**Bylo:** slunce šlo zleva doprava, tedy díváme se na jih a východ je vlevo. Ráno proto stín ukazuje doprava, kde je ale napsáno **III**, a odpoledne doleva na **IX**. Ranní stín tedy ukazuje odpolední hodinu. Navíc v poledne stín míří nahoru, směrem ke slunci.
 
 **Doopravdy:**
 
@@ -77,11 +77,11 @@ Návrhová větev `clock-mechanisms`. Živé náčrty s posuvníkem: `npm start`
   | hodiny od poledne | 1 | 2 | 3 | 4 | 5 | 6 |
   |---|---|---|---|---|---|---|
   | vodorovné | 11,6° | 23,9° | 37,5° | 53,0° | 70,7° | 90° |
-  | svislé jižní | 9,7° | 20,3° | 32,7° | 48,0° | 67,3° | 90° |
+  | svislé jižní | 9,8° | 20,3° | 32,7° | 48,0° | 67,3° | 90° |
 
 - Šikmý ukazatel (polos) musí být rovnoběžný se zemskou osou, tedy skloněný o úhel φ. To je ale středověký vynález. Egyptský gnómon byl svislý, nebo to byla tyč ve tvaru T (merchet). Ukazoval dobově proměnlivé „sezónní“ hodiny.
 
-**Návrh:** nakreslit **svislé jižní hodiny na zdi** (v Česku velmi typické). Slunce je za divákem a jde zprava doleva, stín padá dolů, ranní hodiny jsou vlevo, poledne dole, čáry podle tabulky. Nejmenší oprava je prohodit popisky IX a III a otočit stín, aby v poledne mířil dolů.
+**Nová scéna** (`src/components/Sundial.jsx`, výpočet v `src/clocks/sundial.js`): **svislé jižní hodiny na zdi** pro Prahu ve dne rovnodennosti. Slunce je za divákem a jde zprava doleva, stín ukazatele padá dolů a ranní hodiny jsou vlevo. Hodinové čáry VII–V jsou spočítané podle tabulky (hlídá je test). Na ukazateli je uzel (nodus), jehož stín se ve dne rovnodennosti posouvá po vodorovné přímce (modrá čárkovaná). Proto je stín ráno a večer dlouhý a v poledne nejkratší, což sedí na text kapitoly. Posuvník pokrývá 7:00–17:00 slunečního času, protože dřív a později svítí slunce na zeď z boku nebo zezadu. Výstup ukazuje „sluneční čas“, který se od času na hodinkách liší o pár minut až čtvrt hodiny.
 
 ## 5. Voda a písek — v pořádku, drobnost
 
