@@ -6,24 +6,70 @@ const INK = '#221F2B';
 
 // Every illustration is drawn from `p`, the scroll progress through its chapter (0–1).
 
+const clamp01 = (x) => Math.min(1, Math.max(0, x));
+
 function WaterArt({ p }) {
-  // Water drains from the upper vessel into the lower one; the drip is visible while it flows.
+  // Two story steps of water, then the third step flips in an hourglass and sand takes over.
+  // Water drains from the upper vessel through a hole into the lower one in a steady stream.
+  const w = clamp01(p / 0.62);
+  const turn = clamp01((p - 0.62) / 0.1);
+  const s = 0.92 * clamp01((p - 0.72) / 0.28); // sand never quite runs out, so the reduced-motion still keeps flowing
   const fill = { transformBox: 'fill-box', transformOrigin: 'bottom' };
+  const lowerTop = 200 - 50 * (0.1 + w * 0.8);
+  const ripple = (p * 30) % 1;
+
+  const pile = 198 - s * 44; // lower sand: a cone that grows and rises
+  const peak = pile - 16 * clamp01(s * 5);
+  const upperTop = 34 + s * 66;
+  const glass = 'M60 22C60 78 95 94 95 110C95 126 60 142 60 198H140C140 142 105 126 105 110C105 94 140 78 140 22Z';
   return (
     <svg viewBox="0 0 200 220" className="w-full h-full">
-      <path d="M40 20H160L140 90H60Z" fill="#FBFAF5" stroke={INK} strokeWidth="3" strokeLinejoin="round" />
-      <clipPath id="upper"><path d="M40 20H160L140 90H60Z" /></clipPath>
-      {/* The clip sits on a wrapper so it doesn't scale with the water. */}
-      <g clipPath="url(#upper)">
-        <rect x="30" y="20" width="140" height="70" fill="#2D5BD2" style={{ ...fill, transform: `scaleY(${1 - p * 0.9})` }} />
-        {[30, 45, 60, 75].map((y) => <line key={y} x1="136" y1={y} x2="156" y2={y} stroke={INK} strokeWidth="2" />)}
+      <g style={{ opacity: clamp01(1 - turn * 2) }}>
+        <path d="M40 20H160L140 90H60Z" fill="#FBFAF5" stroke={INK} strokeWidth="3" strokeLinejoin="round" />
+        <clipPath id="upper"><path d="M40 20H160L140 90H60Z" /></clipPath>
+        {/* The clip sits on a wrapper so it doesn't scale with the water. */}
+        <g clipPath="url(#upper)">
+          <rect x="30" y="20" width="140" height="70" fill="#2D5BD2" style={{ ...fill, transform: `scaleY(${1 - w * 0.9})` }} />
+          {[30, 45, 60, 75].map((y) => <line key={y} x1="136" y1={y} x2="156" y2={y} stroke={INK} strokeWidth="2" />)}
+        </g>
+        <rect x="96" y="89" width="8" height="7" fill={INK} />
+        {w < 1 && (
+          <>
+            <line x1="100" y1="96" x2="100" y2={lowerTop} stroke="#2D5BD2" strokeWidth="3" />
+            {[0, 1, 2].map((i) => (
+              <circle key={i} cx="100" cy={96 + ((p * 12 + i / 3) % 1) * (lowerTop - 96)} r="2.5" fill="#2D5BD2" stroke={INK} strokeWidth="1" />
+            ))}
+          </>
+        )}
+        <path d="M50 150H150L140 200H60Z" fill="#FBFAF5" stroke={INK} strokeWidth="3" strokeLinejoin="round" />
+        <clipPath id="lower"><path d="M50 150H150L140 200H60Z" /></clipPath>
+        <g clipPath="url(#lower)">
+          <rect x="40" y="150" width="120" height="50" fill="#2D5BD2" style={{ ...fill, transform: `scaleY(${0.1 + w * 0.8})` }} />
+          {w < 1 && <ellipse cx="100" cy={lowerTop} rx={4 + ripple * 30} ry={1 + ripple * 3} fill="none" stroke="#FBFAF5" strokeWidth="1.5" opacity={1 - ripple} />}
+        </g>
       </g>
-      <circle cx="100" cy="112" r="5" fill="#2D5BD2" stroke={INK} strokeWidth="2" style={{ opacity: p < 0.98 ? 1 : 0, transform: `translateY(${(p * 1000) % 40}px)` }} />
-      <path d="M50 150H150L140 200H60Z" fill="#FBFAF5" stroke={INK} strokeWidth="3" strokeLinejoin="round" />
-      <clipPath id="lower"><path d="M50 150H150L140 200H60Z" /></clipPath>
-      <g clipPath="url(#lower)">
-        <rect x="40" y="150" width="120" height="50" fill="#2D5BD2" style={{ ...fill, transform: `scaleY(${0.1 + p * 0.8})` }} />
-      </g>
+
+      {turn > 0 && (
+        <g style={{ opacity: turn, transform: `rotate(${(1 - turn) * 180}deg)`, transformOrigin: '100px 110px' }}>
+          <path d={glass} fill="#FBFAF5" stroke={INK} strokeWidth="3" strokeLinejoin="round" />
+          <clipPath id="glass"><path d={glass} /></clipPath>
+          <g clipPath="url(#glass)">
+            <path d={`M40 ${upperTop}H90L100 ${upperTop + 6}L110 ${upperTop}H160V110H40Z`} fill="#F4B23E" />
+            <path d={`M40 200V${pile}L100 ${peak}L160 ${pile}V200Z`} fill="#F4B23E" />
+            {turn === 1 && s < 1 && (
+              <>
+                <line x1="100" y1="108" x2="100" y2={peak} stroke="#F4B23E" strokeWidth="2" />
+                {[0, 1, 2, 3].map((i) => (
+                  <circle key={i} cx={100 + (i % 2 ? 1 : -1)} cy={110 + ((p * 20 + i / 4) % 1) * (peak - 110)} r="1.3" fill={INK} />
+                ))}
+              </>
+            )}
+          </g>
+          <path d={glass} fill="none" stroke={INK} strokeWidth="3" strokeLinejoin="round" />
+          <rect x="48" y="12" width="104" height="10" rx="3" fill="#B08A4E" stroke={INK} strokeWidth="3" />
+          <rect x="48" y="198" width="104" height="10" rx="3" fill="#B08A4E" stroke={INK} strokeWidth="3" />
+        </g>
+      )}
     </svg>
   );
 }
@@ -97,33 +143,59 @@ function ChronometerArt({ p }) {
   );
 }
 
+// Local mean time against Prague's: 4 minutes for every degree of longitude.
+const TOWNS = [['Plzeň', -4], ['Praha', 0], ['Vídeň', 8]];
+const SEC_AHEAD = 2.3; // Central European Time runs on the 15° meridian, a little east of Prague
+
 function TrainArt({ p }) {
-  // Every town's clock starts on its own local time; as the train arrives they all agree.
-  const apart = Math.max(0, 1 - p * 1.4);
+  // Every town keeps the time of its own sun; once the zones come in, all the clocks agree on one time.
+  // An hour passes over the chapter while the train steams in and slows to a stop.
+  const apart = clamp01((0.85 - p) / 0.25);
+  const prague = 11 * 60 + 40 + p * 60; // minutes after midnight, Prague local time
+  const x = -150 + 150 * (1 - (1 - p) ** 2);
+  const turn = ((x + 150) / 9) * (180 / Math.PI); // wheels of radius 9 roll without slipping
+  const crank = (cx) => [cx + 5 * Math.cos((turn * Math.PI) / 180), 184 + 5 * Math.sin((turn * Math.PI) / 180)];
+  const [rodA, rodB] = [crank(60), crank(95)];
   return (
     <svg viewBox="0 0 200 220" className="w-full h-full">
-      {[-40, 0, 32].map((offset, i) => {
-        const cx = 40 + i * 60;
-        const minute = (offset * apart + 360) % 360;
-        return (
-          <g key={cx}>
-            <line x1={cx} y1="78" x2={cx} y2="110" stroke={INK} strokeWidth="3" />
-            <circle cx={cx} cy="52" r="26" fill="#FBFAF5" stroke={INK} strokeWidth="3" />
-            <line x1={cx} y1="52" x2={cx} y2="32" stroke="#2D5BD2" strokeWidth="3" strokeLinecap="round" style={{ transform: `rotate(${minute}deg)`, transformOrigin: `${cx}px 52px` }} />
-            <line x1={cx} y1="52" x2={cx} y2="40" stroke={INK} strokeWidth="3" strokeLinecap="round" style={{ transform: `rotate(${minute / 12}deg)`, transformOrigin: `${cx}px 52px` }} />
-            <circle cx={cx} cy="52" r="4" fill={INK} />
-          </g>
-        );
-      })}
+      {Array.from({ length: 67 }, (_, i) => <line key={i} x1={-400 + i * 15} y1="190" x2={-400 + i * 15} y2="196" stroke={INK} strokeWidth="2" />)}
       <line x1="-400" y1="190" x2="600" y2="190" stroke={INK} strokeWidth="3" />
-      <g style={{ transform: `translateX(${-150 + p * 150}px)` }}>
+      <g style={{ transform: `translateX(${x}px)` }}>
+        {[0, 1, 2, 3].map((i) => {
+          const t = (p * 6 + i / 4) % 1; // puffs rise from the chimney and drift back as the train runs
+          return <circle key={i} cx={131 - t * 50} cy={127 - t * 10} r={3 + t * 6} fill="#FBFAF5" stroke={INK} strokeWidth="2" opacity={1 - t} />;
+        })}
         <rect x="40" y="140" width="70" height="40" rx="6" fill="#D2381F" stroke={INK} strokeWidth="3" />
         <rect x="110" y="152" width="40" height="28" rx="4" fill="#A52A15" stroke={INK} strokeWidth="3" />
         <rect x="124" y="130" width="14" height="22" fill={INK} />
         <rect x="52" y="150" width="20" height="14" rx="2" fill="#F7D154" stroke={INK} strokeWidth="3" />
         <rect x="80" y="150" width="20" height="14" rx="2" fill="#F7D154" stroke={INK} strokeWidth="3" />
-        {[60, 95, 135].map((x) => <circle key={x} cx={x} cy="184" r="9" fill="#FBFAF5" stroke={INK} strokeWidth="3" />)}
+        {[60, 95, 135].map((cx) => (
+          <g key={cx} style={{ transform: `rotate(${turn}deg)`, transformOrigin: `${cx}px 184px` }}>
+            <circle cx={cx} cy="184" r="9" fill="#FBFAF5" stroke={INK} strokeWidth="3" />
+            <path d={`M${cx - 7} 184H${cx + 7}M${cx} 177V191`} stroke={INK} strokeWidth="1.5" />
+          </g>
+        ))}
+        <line x1={rodA[0]} y1={rodA[1]} x2={rodB[0]} y2={rodB[1]} stroke={INK} strokeWidth="3" strokeLinecap="round" />
       </g>
+      {TOWNS.map(([town, offset], i) => {
+        const cx = 40 + i * 60;
+        const minutes = prague + offset * apart + SEC_AHEAD * (1 - apart);
+        return (
+          <g key={town}>
+            <line x1={cx} y1="78" x2={cx} y2="98" stroke={INK} strokeWidth="3" />
+            <circle cx={cx} cy="52" r="26" fill="#FBFAF5" stroke={INK} strokeWidth="3" />
+            {[0, 90, 180, 270].map((a) => <line key={a} x1={cx} y1="29" x2={cx} y2="33" stroke={INK} strokeWidth="2" transform={`rotate(${a} ${cx} 52)`} />)}
+            <line x1={cx} y1="52" x2={cx} y2="32" stroke="#2D5BD2" strokeWidth="3" strokeLinecap="round" style={{ transform: `rotate(${minutes * 6}deg)`, transformOrigin: `${cx}px 52px` }} />
+            <line x1={cx} y1="52" x2={cx} y2="40" stroke={INK} strokeWidth="3" strokeLinecap="round" style={{ transform: `rotate(${minutes / 2}deg)`, transformOrigin: `${cx}px 52px` }} />
+            <circle cx={cx} cy="52" r="4" fill={INK} />
+            <text x={cx} y="110" fontSize="10" fontWeight="700" fill={INK} textAnchor="middle">{town}</text>
+            <text x={cx} y="122" fontSize="9" fontWeight="700" fill={apart ? INK : '#2D5BD2'} textAnchor="middle">
+              {apart ? (offset ? `${offset > 0 ? '+' : '−'}${Math.abs(offset)} min` : '±0') : 'SEČ'}
+            </text>
+          </g>
+        );
+      })}
     </svg>
   );
 }

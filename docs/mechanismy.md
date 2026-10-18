@@ -87,6 +87,8 @@ Návrhová větev `clock-mechanisms`. Všechny animace kapitol s posuvníkem: `n
 
 Tvar horní nádoby (širší nahoře) odpovídá skutečné klepsydře z Karnaku: šikmé stěny vyrovnávají to, že se slábnoucím tlakem vody odtéká pomaleji. Text kapitoly teď vysvětluje, že šikmé stěny vyrovnávají slábnoucí proud vody. Uvnitř karnacké nádoby bylo 12 sloupců rysek, jeden pro každý měsíc, protože noční hodiny měly během roku různou délku.
 
+Animace: voda teče souvislým proudem s kapkami a na hladině dole se dělají vlnky. Ve třetím kroku („Přesýpací hodiny“) se kreslí přesýpací hodiny, otočí se a písek se sype do kužele.
+
 ## 6. Křemen — přepracováno
 
 **Bylo:** rozsvěcoval se displej. To je pěkné, ale mechanismus to neukazuje.
@@ -115,9 +117,17 @@ Tvar horní nádoby (širší nahoře) odpovídá skutečné klepsydře z Karnak
 
 **Nová animace** (`AtomArt`): z pícky letí atomy cesia přes třídicí magnet, mikrovlnnou dutinu a druhý magnet. Atomy „překlopené“ mikrovlnami zmodrají a druhý magnet je pošle nahoru do detektoru, ostatní odletí dolů. Jak se číslo 9 192 631 770 zleva „zamyká“, překlápí se víc atomů a detektor svítí víc. Čárkovaná šipka „doladění“ ukazuje zpětnou vazbu z detektoru do mikrovln.
 
-## 8. Orloj — v pořádku
+## 8. Orloj — přepracováno
 
-Slunce jednou za 24 h, Měsíc opožděný o svou fázi, poledne nahoře, kruhy obzoru dole (stereografická projekce dává kruhy, takže je to správně). Skutečná ručička Slunce navíc během roku jezdí po zvěrokruhu, pro tuto úroveň to není potřeba.
+Ciferník je teď spočítaný jako skutečná stereografická projekce z jižního pólu (`src/clocks/orloj.js`, hlídá ji test). Obzor a hranice soumraku (−18°) jsou kružnice pro zeměpisnou šířku Prahy, takže Slunce vychází a zapadá ve správný čas (o rovnodennosti v 6 a v 18). Prstenec zvěrokruhu je promítnutá ekliptika. Dotýká se obratníků a otáčí se s hvězdami, tedy o trochu rychleji než Slunce. Slunce a Měsíc po něm jezdí, Slunce je proto v létě blízko středu a v zimě u okraje. Měsíc stojí na ekliptice o svou fázi dál a ukazuje skutečný osvětlený srpek.
+
+Scéna je celá fasáda jako na Staroměstské radnici: nahoře stříška s kohoutem a dvě okénka s dřevěnými dvířky, pod nimi ciferník ve čtvercovém rámu. Po stranách stojí ve výklencích čtyři figury jako na originálu: vlevo Marnivec se zrcátkem a Lakomec s měšcem, vpravo Smrt se zvoncem a Turek s loutnou. Vnější černý prstenec nese zlaté staročeské hodiny 1–24 a otáčí se tak, aby 24 padla na západ slunce v Praze. Uvnitř jsou pevné římské číslice I–XII dvakrát dokola, na které ukazuje zlatá ruka Slunce.
+
+Průběh odbíjení odpovídá skutečnosti. Smrt zatahá za zvonec, kývne hlavou a obrátí přesýpací hodiny. Ostatní figury kroutí hlavou nebo potřásají tím, co drží. Dvířka se otevřou a šest dvojic apoštolů přejde okénky, přičemž se každý na chvíli zastaví čelem k náměstí. Pak se dvířka zavřou a kohout zamává křídly a zakokrhá.
+
+## 9. Vlaky a časová pásma — přepracováno
+
+Místní čas Plzně a Vídně se od pražského liší o −4 a +8 minut (4 minuty na stupeň zeměpisné délky). Během kapitoly uplyne hodina. Když se zavedou pásma, všechny hodiny skočí na SEČ, tedy čas 15. poledníku, který jde o 2,3 minuty napřed proti pražskému místnímu času. Lokomotiva zpomaluje do stanice, kola se valí bez prokluzu a ojnice je spojuje.
 
 ## Zdroje
 

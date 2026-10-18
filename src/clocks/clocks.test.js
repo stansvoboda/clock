@@ -7,6 +7,7 @@ import { toBinaryColumns } from './binary.js';
 import { toWords } from './words.js';
 import { dragTo } from './dial.js';
 import { moonPhase } from './moon.js';
+import { altitudeCircle, onDial, sunLongitude, sunsetAngle } from './orloj.js';
 
 const at = (hours, minutes, seconds = 0) => new Date(2026, 0, 1, hours, minutes, seconds);
 
@@ -67,4 +68,22 @@ test('moon phase is new at a known new moon and full half a month later', () => 
   assert.ok(moonPhase(new Date(Date.UTC(2000, 0, 6, 18, 14))) < 0.001);
   assert.ok(Math.abs(moonPhase(new Date(Date.UTC(2000, 0, 21, 4, 40))) - 0.5) < 0.02); // total lunar eclipse = full moon
   assert.ok(Math.abs(moonPhase(new Date(Date.UTC(1999, 11, 30))) - 0.74) < 0.01); // before the reference date still lands in 0–1
+});
+
+test('orloj dial puts the summer sun near the centre and the winter sun near the rim', () => {
+  assert.ok(Math.abs(((sunLongitude(new Date(Date.UTC(2026, 2, 20, 14, 46))) + 180) % 360) - 180) < 0.1); // March equinox
+  assert.ok(Math.abs(sunLongitude(new Date(Date.UTC(2026, 5, 21, 8, 24))) - 90) < 0.1); // June solstice
+  assert.ok(Math.abs(onDial(0, 0).angle) < 1e-9 && Math.abs(onDial(0, 0).r - 66) < 1e-9);
+  assert.ok(Math.abs(onDial(90, 0).r - 43.3) < 0.1 && Math.abs(onDial(90, 0).angle + 90) < 1e-9);
+  assert.ok(Math.abs(onDial(270, 0).r - 100.6) < 0.2);
+});
+
+test('orloj horizon crosses the equator at six o\'clock, so the equinox sun rises at six', () => {
+  const { dy, r } = altitudeCircle(0);
+  assert.ok(Math.abs(Math.hypot(66, dy) - r) < 1e-9);
+});
+
+test('Prague sunset: six in the evening at the equinox, after eight solar time at midsummer', () => {
+  assert.ok(Math.abs(sunsetAngle(0) - 90) < 1e-9);
+  assert.ok(Math.abs(sunsetAngle(90) / 15 - 8.08) < 0.02);
 });
