@@ -84,6 +84,16 @@
   }
 }
 
+/* An Orloj apostle walks into its window, turns to the square for a moment and walks on. */
+@keyframes apostle-walk {
+  0% { transform: translateX(130%); }
+  35%, 65% { transform: none; }
+  100% { transform: translateX(-130%); }
+}
+
+/* The Orloj rooster flaps its wing as it crows. */
+@keyframes rooster-flap { to { transform: rotate(-35deg); } }
+
 @keyframes grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 @keyframes fly {
   0% { opacity: 0.15; transform: translateY(-64px) rotate(-1.5deg); }

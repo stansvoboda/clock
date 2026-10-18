@@ -1,25 +1,43 @@
 import { useEffect, useRef, useState } from 'react';
 import { prefersReducedMotion, useScrollProgress } from '../scroll.js';
 import { Fact, SceneTitle, Step } from './Chapter.jsx';
+import { hourLineSlope } from '../clocks/sundial.js';
 
+// Slider value 0–100 runs from 7:00 to 17:00 solar time on the equinox. Earlier or later the sun is
+// behind the wall, and at 6:00 and 18:00 the shadow would run off to infinity.
 const PRESETS = [
-  ['Ráno', 15],
+  ['Ráno', 10],
   ['Poledne', 50],
-  ['Odpoledne', 75],
-  ['Západ', 92],
+  ['Odpoledne', 80],
+  ['Večer', 100],
 ];
+const solarHour = (day) => 7 + day / 10;
+const HOURS = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
+const NUMERALS = { 7: 'VII', 8: 'VIII', 9: 'IX', 10: 'X', 11: 'XI', 12: 'XII', 13: 'I', 14: 'II', 15: 'III', 16: 'IV', 17: 'V' };
+
+// The dial drawing: the style's root at the top, hour lines fanning down, edge of the painted dial.
+const ROOT = [150, 24];
+const DROP = 40; // from the root down to the equinox line, which the nodus's shadow follows all day
+const EDGE = { left: 18, right: 282, bottom: 168 };
+
+// Where an hour line from the root meets the edge of the dial.
+function lineEnd(hour) {
+  const slope = hourLineSlope(hour);
+  const down = EDGE.bottom - ROOT[1];
+  const across = slope < 0 ? ROOT[0] - EDGE.left : EDGE.right - ROOT[0];
+  const t = Math.min(down, across / Math.abs(slope || 1e-9));
+  return [ROOT[0] + slope * t, ROOT[1] + t];
+}
 
 const STEPS = [
   ['Sluneční tyč v písku', <>Před 3 500 lety ve starověkém Egyptě zapíchli do země prostou tyč — <strong>gnómon</strong>. Zjistili, že délka a směr jejího stínu se během dne pravidelně mění.</>],
   ['Otáčivý tanec stínu', 'Stín se otáčel spolu se sluncem na obloze. Ráno byl dlouhý, v poledne nejkratší a večer se zase protahoval na druhou stranu.'],
-  ['Kde byl stín, tam byl čas', 'Rozdělením denní dráhy na 12 dílů vznikly první hodiny. Měly však háček: v noci nebo pod mrakem se čas doslova zastavil.'],
+  ['Kde byl stín, tam byl čas', 'Rozdělením denní dráhy na 12 dílů vznikly první hodiny. Ty pozdější, třeba na zdech kostelů, mají šikmý ukazatel mířící k nebeskému pólu, a proto ukazují správně po celý rok. Háček zůstal: v noci nebo pod mrakem se čas doslova zastavil.'],
 ];
 
-function dayLabel(value) {
-  if (value < 30) return 'Ráno (cca 8:00)';
-  if (value <= 60) return 'Poledne (12:00)';
-  if (value < 85) return 'Odpoledne (cca 16:00)';
-  return 'Západ slunce (cca 19:30)';
+function timeLabel(day) {
+  const minutes = Math.round((solarHour(day) * 60) / 5) * 5;
+  return `Sluneční čas ${Math.floor(minutes / 60)}:${String(minutes % 60).padStart(2, '0')}`;
 }
 
 export default function Sundial() {
@@ -36,11 +54,13 @@ export default function Sundial() {
     if (progress !== null && !prefersReducedMotion()) setDay(Math.round(progress * 100));
   }, [progress]);
 
-  const sunLeft = 10 + day * 0.8;
-  const sunTop = 55 - Math.sin((day / 100) * Math.PI) * 40;
-  // The shadow points away from the sun and is longest when the sun is low.
-  const shadowAngle = (day - 50) * -1.5;
-  const shadowLength = 0.5 + Math.abs(day - 50) * 0.015;
+  // We face the south wall, so the sun is behind us: it rises on our right and sets on our left,
+  // and the shadow swings the other way, from the morning hours on the left to the evening ones on the right.
+  const hour = solarHour(day);
+  const sunLeft = 90 - day * 0.8;
+  const sunTop = 26 - Math.sin(((hour - 6) / 12) * Math.PI) * 16; // stays in the sky above the wall
+  // The tip of the style (the nodus) casts its shadow onto the equinox line; the shadow is the style's line to it.
+  const shadow = [ROOT[0] + hourLineSlope(hour) * DROP, ROOT[1] + DROP];
 
   return (
     <section id="slunce" ref={sectionRef} className="py-24 scroll-mt-16">
@@ -52,10 +72,10 @@ export default function Sundial() {
             <div className="screen hang p-4 sm:p-6 [--cable:4rem]">
               <div className="flex flex-wrap justify-between items-end gap-3 pb-4">
                 <div>
-                  <h3 className="font-display font-extrabold text-2xl leading-tight">Egyptský sluneční gnómon</h3>
-                  <p className="text-sm">Interaktivní simulátor</p>
+                  <h3 className="font-display font-extrabold text-2xl leading-tight">Sluneční hodiny na zdi</h3>
+                  <p className="text-sm">Interaktivní simulátor • Praha, jarní rovnodennost</p>
                 </div>
-                <output htmlFor="sun-slider" className="surtitle text-sm">{dayLabel(day)}</output>
+                <output htmlFor="sun-slider" className="surtitle text-sm">{timeLabel(day)}</output>
               </div>
 
               <div ref={stageRef} className="relative w-full h-[300px] md:h-[380px] overflow-hidden bg-[#BFE3EC]" aria-hidden="true">
@@ -63,18 +83,29 @@ export default function Sundial() {
                   <path d="M30 2V10M30 50V58M2 30H10M50 30H58M10 10L16 16M44 44L50 50M10 50L16 44M44 16L50 10" stroke="#D2381F" strokeLinecap="round" strokeWidth="3" />
                   <circle cx="30" cy="30" r="17" fill="#F4B23E" />
                 </svg>
-                <div className="absolute inset-x-0 bottom-0 flex flex-col items-center">
-                  <div className="w-64 md:w-96 h-36 rounded-t-full bg-screen relative flex justify-center overflow-hidden">
-                    <div className="wide text-xs font-bold">
-                      <span className="absolute left-[16%] top-[38%]">IX</span>
-                      <span className="absolute left-1/2 -translate-x-1/2 top-3">XII</span>
-                      <span className="absolute right-[16%] top-[38%]">III</span>
-                    </div>
-                    <div className="absolute bottom-0 w-3 h-28 bg-ink/45 rounded-full origin-bottom" style={{ transform: `rotate(${shadowAngle}deg) scaleY(${shadowLength})` }} />
-                    <div className="absolute bottom-0 w-3 h-24 bg-ink z-10" />
-                  </div>
-                  <div className="w-full bg-[#E9C77B] h-10" />
-                </div>
+                <svg viewBox="0 0 300 200" className="absolute inset-x-0 bottom-0 w-full h-[66%]">
+                  {/* Plastered church wall with the painted dial; ground in front of it. */}
+                  <rect x="-300" y="0" width="900" height="200" fill="#FBFAF5" />
+                  <rect x={EDGE.left - 8} y="8" width={EDGE.right - EDGE.left + 16} height={EDGE.bottom} rx="4" fill="none" stroke="#221F2B" strokeWidth="2.5" />
+                  <line x1={EDGE.left} y1={ROOT[1] + DROP} x2={EDGE.right} y2={ROOT[1] + DROP} stroke="#2D5BD2" strokeWidth="1.5" strokeDasharray="4 4" />
+                  {HOURS.map((h) => {
+                    const [x, y] = lineEnd(h);
+                    const [lx, ly] = [ROOT[0] + (x - ROOT[0]) * 0.86, ROOT[1] + (y - ROOT[1]) * 0.86];
+                    return (
+                      <g key={h}>
+                        <line x1={ROOT[0]} y1={ROOT[1]} x2={lx} y2={ly} stroke="#221F2B" strokeWidth="1.5" opacity="0.5" />
+                        <text x={x} y={y} dy={y >= EDGE.bottom - 1 ? -4 : 4} textAnchor="middle" className="wide" fontSize="11" fontWeight="700" fill="#221F2B">{NUMERALS[h]}</text>
+                      </g>
+                    );
+                  })}
+                  <line x1={ROOT[0]} y1={ROOT[1]} x2={shadow[0]} y2={shadow[1]} stroke="#221F2B" strokeWidth="5" strokeLinecap="round" opacity="0.45" />
+                  <circle cx={shadow[0]} cy={shadow[1]} r="5" fill="#221F2B" opacity="0.6" />
+                  {/* The style sticks out of the wall toward the sky's pole; seen face on it is a short stub. */}
+                  <line x1={ROOT[0]} y1={ROOT[1]} x2={ROOT[0]} y2={ROOT[1] + 18} stroke="#221F2B" strokeWidth="4" strokeLinecap="round" />
+                  <circle cx={ROOT[0]} cy={ROOT[1] + 18} r="4" fill="#D2381F" stroke="#221F2B" strokeWidth="2" />
+                  <circle cx={ROOT[0]} cy={ROOT[1]} r="4" fill="#221F2B" />
+                  <rect x="-300" y="186" width="900" height="14" fill="#E9C77B" />
+                </svg>
               </div>
 
               <div className="mt-5 pt-4 border-t-2 border-ink">
@@ -85,8 +116,8 @@ export default function Sundial() {
                       key={label}
                       type="button"
                       onClick={() => setDay(value)}
-                      aria-pressed={dayLabel(day) === dayLabel(value)}
-                      className={`cue ${dayLabel(day) === dayLabel(value) ? 'cue-on' : ''}`}
+                      aria-pressed={day === value}
+                      className={`cue ${day === value ? 'cue-on' : ''}`}
                     >
                       {label}
                     </button>
