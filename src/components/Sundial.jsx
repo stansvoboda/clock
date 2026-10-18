@@ -32,7 +32,7 @@ function lineEnd(hour) {
 const STEPS = [
   ['Sluneční tyč v písku', <>Před 3 500 lety ve starověkém Egyptě zapíchli do země prostou tyč — <strong>gnómon</strong>. Zjistili, že délka a směr jejího stínu se během dne pravidelně mění.</>],
   ['Otáčivý tanec stínu', 'Stín se otáčel spolu se sluncem na obloze. Ráno byl dlouhý, v poledne nejkratší a večer se zase protahoval na druhou stranu.'],
-  ['Kde byl stín, tam byl čas', 'Rozdělením denní dráhy na 12 dílů vznikly první hodiny. Měly však háček: v noci nebo pod mrakem se čas doslova zastavil.'],
+  ['Kde byl stín, tam byl čas', 'Rozdělením denní dráhy na 12 dílů vznikly první hodiny. Ty pozdější, třeba na zdech kostelů, mají šikmý ukazatel mířící k nebeskému pólu, a proto ukazují správně po celý rok. Háček zůstal: v noci nebo pod mrakem se čas doslova zastavil.'],
 ];
 
 function timeLabel(day) {

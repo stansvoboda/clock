@@ -135,28 +135,26 @@ export function PendulumArt({ p }) {
 // wheel swings back and forth, and a rocking ship cannot disturb it the way it upsets a pendulum.
 const COILS = 5;
 
-export function BalanceArt({ p }) {
-  const [cx, cy] = [100, 110];
-  const swing = 150 * Math.sin(p * 16 * Math.PI);
+export function Balance({ cx, cy, r, swing }) {
+  const outer = r * 0.55;
   // The inner end turns with the wheel, the outer end is pinned to the stud; the coils between share the twist.
   const spring = Array.from({ length: 121 }, (_, i) => {
     const s = i / 120;
     const a = rad(s * COILS * 360 + swing * (1 - s) - 90);
-    const r = 6 + 30 * s;
-    return `${(cx + r * Math.cos(a)).toFixed(2)} ${(cy + r * Math.sin(a)).toFixed(2)}`;
+    const radius = 5 + (outer - 5) * s;
+    return `${(cx + radius * Math.cos(a)).toFixed(2)} ${(cy + radius * Math.sin(a)).toFixed(2)}`;
   });
-
   return (
-    <svg viewBox="0 0 200 220" className="w-full h-full">
+    <g>
       <g style={{ transform: `rotate(${swing}deg)`, transformOrigin: `${cx}px ${cy}px` }}>
-        <circle cx={cx} cy={cy} r="66" fill="none" stroke={INK} strokeWidth="12" />
-        <circle cx={cx} cy={cy} r="66" fill="none" stroke="#F4B23E" strokeWidth="6" />
-        {[0, 120, 240].map((a) => <line key={a} x1={cx} y1={cy} x2={cx + 60 * Math.cos(rad(a))} y2={cy + 60 * Math.sin(rad(a))} stroke={INK} strokeWidth="4" />)}
-        {[60, 180, 300].map((a) => <circle key={a} cx={cx + 66 * Math.cos(rad(a))} cy={cy + 66 * Math.sin(rad(a))} r="5" fill="#D2381F" stroke={INK} strokeWidth="2" />)}
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke={INK} strokeWidth="10" />
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke="#F4B23E" strokeWidth="5" />
+        {[0, 120, 240].map((a) => <line key={a} x1={cx} y1={cy} x2={cx + (r - 5) * Math.cos(rad(a))} y2={cy + (r - 5) * Math.sin(rad(a))} stroke={INK} strokeWidth="3" />)}
+        {[60, 180, 300].map((a) => <circle key={a} cx={cx + r * Math.cos(rad(a))} cy={cy + r * Math.sin(rad(a))} r="4" fill="#D2381F" stroke={INK} strokeWidth="2" />)}
       </g>
-      <path d={`M${spring.join('L')}`} fill="none" stroke="#2D5BD2" strokeWidth="2" />
-      <rect x={cx - 4} y={cy - 44} width="8" height="10" fill={INK} />
-      <circle cx={cx} cy={cy} r="6" fill={INK} />
-    </svg>
+      <path d={`M${spring.join('L')}`} fill="none" stroke="#2D5BD2" strokeWidth="1.8" />
+      <rect x={cx - 3.5} y={cy - outer - 8} width="7" height="9" fill={INK} />
+      <circle cx={cx} cy={cy} r="5" fill={INK} />
+    </g>
   );
 }

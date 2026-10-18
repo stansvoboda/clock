@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { prefersReducedMotion, useScrollProgress } from '../scroll.js';
-import { GearsArt, PendulumArt } from './Mechanisms.jsx';
+import { Balance, GearsArt, PendulumArt } from './Mechanisms.jsx';
 
 const INK = '#221F2B';
 
@@ -30,45 +30,62 @@ function WaterArt({ p }) {
 
 // Segments a–g of a seven-segment digit: [x, y, width, height] in a 30 × 54 box.
 const SEGMENTS = { a: [5, 0, 20, 5], b: [25, 5, 5, 20], c: [25, 29, 5, 20], d: [5, 49, 20, 5], e: [0, 29, 5, 20], f: [0, 5, 5, 20], g: [5, 24.5, 20, 5] };
-const DIGITS = { 1: 'bc', 2: 'abdeg', 0: 'abcdef' };
-const DISPLAY = ['1', '2', '0', '0']; // 12:00, blinking on like a new watch
-const DISPLAY_SEGMENTS = DISPLAY.reduce((sum, digit) => sum + DIGITS[digit].length, 0);
+const DIGITS = { 0: 'abcdef', 1: 'bc', 2: 'abdeg', 3: 'abcdg', 4: 'bcfg', 5: 'acdfg', 6: 'acdefg', 7: 'abc', 8: 'abcdefg', 9: 'abcdfg' };
+const QUARTZ_HZ = 32768;
+const STAGES = 15; // 2^15 = 32 768, so fifteen halvings leave exactly one tick a second
+const QUARTZ_SECONDS = 9.99; // watch time that passes over the whole chapter
 
 function QuartzArt({ p }) {
-  // The display fills in one segment at a time.
-  const lit = Math.round(p * DISPLAY_SEGMENTS);
-  let index = 0;
+  // The crystal fork hums 32 768 times a second; each divider stage flips at half the speed of the one
+  // before it, the last flips once a second and steps the display (and blinks its colon).
+  const t = p * QUARTZ_SECONDS;
+  const hum = 1.5 * Math.sin(p * 4000); // far too fast to see, so it just shimmers
+  const display = `000${Math.floor(t)}`;
+  const colon = Math.floor(t * 2) % 2 === 0;
   return (
     <svg viewBox="0 0 200 220" className="w-full h-full">
-      <rect x="40" y="10" width="120" height="30" rx="6" fill="#2D5BD2" stroke={INK} strokeWidth="3" />
-      <rect x="40" y="180" width="120" height="30" rx="6" fill="#2D5BD2" stroke={INK} strokeWidth="3" />
-      <rect x="20" y="40" width="160" height="140" rx="28" fill="#221F2B" stroke={INK} strokeWidth="3" />
-      <rect x="34" y="72" width="132" height="76" rx="8" fill="#3A3646" stroke={INK} strokeWidth="3" />
-      {DISPLAY.map((digit, i) => (
-        <g key={i} transform={`translate(${44 + i * 30 + (i > 1 ? 12 : 0)} 83) scale(0.75 1)`}>
-          {Object.entries(SEGMENTS).map(([name, [x, y, w, h]]) => {
-            const on = DIGITS[digit].includes(name) && index++ < lit;
-            return <rect key={name} x={x} y={y} width={w} height={h} rx="2" fill={on ? '#FF7A5C' : '#4A4556'} />;
-          })}
+      <path d={`M${92 - hum} 10L92 46Q92 56 100 56Q108 56 108 46L${108 + hum} 10`} fill="none" stroke={INK} strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
+      <path d={`M${92 - hum} 10L92 46Q92 56 100 56Q108 56 108 46L${108 + hum} 10`} fill="none" stroke="#FBFAF5" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+      <line x1="100" y1="57" x2="100" y2="72" stroke={INK} strokeWidth="2.5" />
+      <text x="116" y="30" fontSize="9" fontWeight="700" fill={INK}>32 768 Hz</text>
+
+      {Array.from({ length: STAGES }, (_, i) => {
+        const hz = QUARTZ_HZ / 2 ** (i + 1);
+        const on = Math.floor(t * 2 * hz) % 2 === 0;
+        // Stages faster than a few flips a second blur, as they would to the eye.
+        const fill = hz > 4 ? '#B08A4E' : on ? '#F4B23E' : '#4A4556';
+        return <rect key={i} x={6 + i * 12.6} y="74" width="10" height="12" rx="2" fill={fill} stroke={INK} strokeWidth="1.5" />;
+      })}
+      <line x1="11" y1="72" x2="100" y2="72" stroke={INK} strokeWidth="2.5" />
+      <text x="6" y="98" fontSize="8" fontWeight="700" fill={INK}>÷2 ÷2 ÷2 …</text>
+      <text x="183" y="98" fontSize="8" fontWeight="700" fill={INK} textAnchor="end">1 Hz</text>
+      <line x1="187" y1="87" x2="187" y2="122" stroke={INK} strokeWidth="2.5" />
+
+      <rect x="20" y="112" width="160" height="96" rx="24" fill="#221F2B" stroke={INK} strokeWidth="3" />
+      <rect x="34" y="128" width="132" height="64" rx="8" fill="#3A3646" stroke={INK} strokeWidth="3" />
+      {[...display.slice(-4)].map((digit, i) => (
+        <g key={i} transform={`translate(${44 + i * 30 + (i > 1 ? 12 : 0)} 137) scale(0.75 0.85)`}>
+          {Object.entries(SEGMENTS).map(([name, [x, y, w, h]]) => (
+            <rect key={name} x={x} y={y} width={w} height={h} rx="2" fill={DIGITS[digit].includes(name) ? '#FF7A5C' : '#4A4556'} />
+          ))}
         </g>
       ))}
-      <circle cx="100" cy="100" r="3" fill={p > 0.5 ? '#FF7A5C' : '#4A4556'} />
-      <circle cx="100" cy="120" r="3" fill={p > 0.5 ? '#FF7A5C' : '#4A4556'} />
+      <circle cx="100" cy="152" r="3" fill={colon ? '#FF7A5C' : '#4A4556'} />
+      <circle cx="100" cy="168" r="3" fill={colon ? '#FF7A5C' : '#4A4556'} />
     </svg>
   );
 }
 
 function ChronometerArt({ p }) {
-  // The ship rocks on the waves, yet the watch above keeps ticking steadily: that was the whole challenge.
+  // The ship rocks on the waves, yet the balance inside the watch keeps its own steady swing: gravity
+  // does not drive it as it drives a pendulum, so the rocking cannot upset it.
   const rock = 8 * Math.sin(p * 12 * Math.PI);
-  const ticks = Math.floor(p * 60);
+  const swing = 150 * Math.sin(p * 40 * Math.PI);
   return (
     <svg viewBox="0 0 200 220" className="w-full h-full">
       <rect x="92" y="6" width="16" height="12" rx="3" fill="#F4B23E" stroke={INK} strokeWidth="3" />
       <circle cx="100" cy="62" r="46" fill="#FBFAF5" stroke={INK} strokeWidth="3" />
-      {Array.from({ length: 12 }, (_, i) => <line key={i} x1="100" y1="20" x2="100" y2="27" stroke={INK} strokeWidth="3" transform={`rotate(${i * 30} 100 62)`} />)}
-      <line x1="100" y1="62" x2="100" y2="26" stroke="#2D5BD2" strokeWidth="3" strokeLinecap="round" style={{ transform: `rotate(${ticks * 6}deg)`, transformOrigin: '100px 62px' }} />
-      <circle cx="100" cy="62" r="5" fill={INK} />
+      <Balance cx={100} cy={62} r={34} swing={swing} />
       <g style={{ transform: `rotate(${rock}deg)`, transformOrigin: '100px 180px' }}>
         <line x1="100" y1="160" x2="100" y2="116" stroke={INK} strokeWidth="3" />
         <path d="M105 120V155H138Z" fill="#FBFAF5" stroke={INK} strokeWidth="3" strokeLinejoin="round" />
@@ -113,20 +130,49 @@ function TrainArt({ p }) {
 
 const CAESIUM = '9192631770';
 
+// Atoms whose turn it is to fly, spread through the beam; the same ones flip each time, so the count reads steadily.
+const ATOMS = 18;
+
 function AtomArt({ p }) {
-  // Digits lock in from left to right; the rest keep scrambling until the scroll catches up.
+  // A caesium beam clock, left to right: oven, sorting magnet, microwave cavity, second magnet, detector.
+  // The microwaves are tuned while the digits lock in; the closer to 9 192 631 770 Hz, the more atoms flip
+  // (turn blue), and only flipped atoms are steered into the detector, which steers the tuning in turn.
   const locked = Math.floor(p * (CAESIUM.length + 1));
   const number = [...CAESIUM].map((d, i) => (i < locked ? d : (Number(d) + Math.floor(p * 97) * (i + 3)) % 10)).join('');
+  const tuned = locked / CAESIUM.length;
+  const label = { fontSize: 8.5, fontWeight: 700, fill: INK, textAnchor: 'middle' };
+  const magnet = (x) => (
+    <g key={x}>
+      <rect x={x} y="74" width="18" height="18" rx="2" fill="#D2381F" stroke={INK} strokeWidth="2.5" />
+      <rect x={x} y="108" width="18" height="18" rx="2" fill="#2D5BD2" stroke={INK} strokeWidth="2.5" />
+    </g>
+  );
   return (
     <div className="w-full h-full flex flex-col items-center justify-center gap-3">
-      <svg viewBox="0 0 200 200" className="w-full flex-1 min-h-0">
-        {[0, 60, 120].map((tilt) => (
-          <g key={tilt} style={{ transform: `rotate(${tilt + p * 180}deg)`, transformOrigin: '100px 100px' }}>
-            <ellipse cx="100" cy="100" rx="85" ry="28" fill="none" stroke={INK} strokeWidth="3" />
-            <circle cx="185" cy="100" r="8" fill="#F4B23E" stroke={INK} strokeWidth="3" />
-          </g>
-        ))}
-        <circle cx="100" cy="100" r="20" fill="#2D5BD2" stroke={INK} strokeWidth="3" />
+      <svg viewBox="0 0 200 180" className="w-full flex-1 min-h-0">
+        <rect x="4" y="82" width="26" height="36" rx="4" fill="#F4B23E" stroke={INK} strokeWidth="2.5" />
+        <text x="17" y="76" {...label}>cesium</text>
+        {magnet(40)}
+        <text x="49" y="68" {...label}>magnet</text>
+        <rect x="70" y="80" width="58" height="40" rx="3" fill="#FBFAF5" stroke={INK} strokeWidth="2.5" />
+        <path d={`M72 ${88}${Array.from({ length: 9 }, (_, i) => ` q3 ${i % 2 ? 5 : -5} 6 0`).join('')}`} fill="none" stroke="#BFA6EE" strokeWidth="2" style={{ transform: `translateX(${(p * 120) % 12 - 6}px)` }} />
+        <text x="99" y="68" {...label}>mikrovlny</text>
+        {magnet(138)}
+        <text x="147" y="68" {...label}>magnet</text>
+        <rect x="174" y="50" width="22" height="24" rx="3" fill="#2D5BD2" fillOpacity={0.15 + 0.85 * tuned} stroke={INK} strokeWidth="2.5" />
+        <text x="185" y="44" {...label}>detektor</text>
+        {/* The detector's count tunes the microwaves: the feedback loop. */}
+        <path d="M185 74V150H99V124" fill="none" stroke={INK} strokeWidth="1.5" strokeDasharray="3 3" />
+        <path d="M95 128L99 121L103 128Z" fill={INK} />
+        <text x="142" y="164" {...label}>doladění</text>
+        {Array.from({ length: ATOMS }, (_, i) => {
+          const x = 30 + ((p * 6 + i / ATOMS) % 1) * 170;
+          const flips = ((i * 7) % ATOMS) / ATOMS < tuned;
+          const past = x > 156 ? x - 156 : 0; // the second magnet steers them once they leave it
+          if (flips && x > 180) return null; // counted by the detector
+          const y = 100 + (flips ? -past * 1.25 : past * 0.6);
+          return <circle key={i} cx={x} cy={y} r="3.5" fill={flips && x > 99 ? '#2D5BD2' : '#F4B23E'} stroke={INK} strokeWidth="1.5" />;
+        })}
       </svg>
       <p className="surtitle wide text-xl md:text-2xl tabular-nums">
         {number.slice(0, 1)} {number.slice(1, 4)} {number.slice(4, 7)} {number.slice(7)}
@@ -174,7 +220,7 @@ export const CHAPTERS = [
     id: 'voda', when: 'cca 1400 př. n. l.', title: 'Voda a písek', error: 'Chyba: ~15 minut denně', perDay: 900, Art: WaterArt,
     bg: '#86CFE0', subtitle: 'Hodiny, které jdou i v noci',
     steps: [
-      ['Nádoba s dírkou', 'Klepsydra je nádoba s malou dírkou u dna. Voda odkapává pořád stejně rychle a rysky na stěně ukazují, kolik času uplynulo.'],
+      ['Nádoba s dírkou', 'Klepsydra je nádoba s malou dírkou u dna. Jak vody ubývá, teče pomaleji, a proto má nádoba šikmé stěny: hladina tak klesá skoro stejně rychle a rysky na stěně ukazují, kolik času uplynulo.'],
       ['I v noci a pod mrakem', 'Na rozdíl od stínu klepsydra nepotřebuje slunce. Ve starých Athénách odměřovala řečníkům u soudu, jak dlouho smějí mluvit.'],
       ['Přesýpací hodiny', 'Písek místo vody přišel až ve středověku. Hodil se na lodě, kde by voda na vlnách šplouchala.'],
     ],
@@ -195,7 +241,7 @@ export const CHAPTERS = [
     bg: '#F29AAA', subtitle: 'Z minut na sekundy',
     steps: [
       ['Pořád stejně dlouho', 'Galileo Galilei si všiml, že kyvadlo se houpe pořád stejně dlouho — ať kmitá trochu víc, nebo trochu míň.'],
-      ['Huygensovy hodiny', 'Christiaan Huygens v roce 1656 postavil první kyvadlové hodiny. Každý kyv pustí ozubené kolo o půl zubu dál.'],
+      ['Huygensovy hodiny', 'Christiaan Huygens v roce 1656 postavil první kyvadlové hodiny. Brzy k nim přibyla kotva: každý kyv pustí ozubené kolo o půl zubu dál.'],
       ['Najednou přesně', 'Chyba klesla z mnoha minut na pár sekund denně. Hodiny konečně dostaly i minutovou ručičku.'],
     ],
     fact: 'Kyvadlo dlouhé skoro přesně 1 metr udělá jeden kyv za 1 sekundu. Říká se mu sekundové kyvadlo.',

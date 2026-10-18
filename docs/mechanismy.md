@@ -1,6 +1,6 @@
 # Mechanismy hodin: co je v animacích špatně a jak to funguje doopravdy
 
-Návrhová větev `clock-mechanisms`. Živé náčrty s posuvníkem: `npm start` a otevřít `/mechanismy.html`.
+Návrhová větev `clock-mechanisms`. Všechny animace kapitol s posuvníkem: `npm start` a otevřít `/mechanismy.html`.
 
 ## 1. Ozubená kola (lihýřové hodiny, konec 13. století) — přepracováno
 
@@ -51,19 +51,19 @@ Návrhová větev `clock-mechanisms`. Živé náčrty s posuvníkem: `npm start`
 - Krokové kolo má **30 zubů**. Každý kyv kyvadla ho pustí o **půl zubu** (6°), takže se otočí jednou za minutu. Proto může sekundová ručička sedět přímo na jeho ose.
 - Ramena kotvy jsou tečná ke kolu, takže lopatky se při kyvu noří a vynořují skoro kolmo k okraji kola.
 - Skutečné kyvadlo s kotvou kmitá jen o 3–4°. Animace ukazuje ±7°, aby byl pohyb vidět.
-- Huygens v roce 1656 použil kyvadlo ještě s vřetenovým krokem (s velkým rozkmitem a cykloidními lícnicemi). Kotvu přidali kolem roku 1670 v Anglii (William Clement nebo Robert Hooke). Animace ukazuje kotvu, protože je srozumitelnější. Text kapitoly zatím mluví jen o Huygensovi.
+- Huygens v roce 1656 použil kyvadlo ještě s vřetenovým krokem (s velkým rozkmitem a cykloidními lícnicemi). Kotvu přidali kolem roku 1670 v Anglii (William Clement nebo Robert Hooke). Animace ukazuje kotvu, protože je srozumitelnější, a text kapitoly teď říká, že kotva „brzy přibyla“.
 
 **Opraven text:** „Každý kyv pustí ozubené kolo o *půl zubu* dál“ (dřív „o jeden zub“).
 
 **Nová animace** (`PendulumArt`): kotva, kyvadlo, krokové kolo s 30 zuby a sekundovou ručičkou na jeho ose. Ciferník je kostrový (průhledný), aby kolo bylo vidět.
 
-## 3. Hodiny na moři (Harrison H4, 1761) — jen návrh
+## 3. Hodiny na moři (Harrison H4, 1761) — přepracováno
 
-**Teď:** houpající se loď a ciferník. Pocit je správný, ale nic neukazuje, proč tyhle hodiny vlny nerozhodí.
+**Bylo:** houpající se loď a ciferník. Pocit je správný, ale nic neukazuje, proč tyhle hodiny vlny nerozhodí.
 
 **Doopravdy:** místo kyvadla kmitá **setrvačka** (balance), kolečko se spirálovým **vláskem**. Vlásek se střídavě navíjí a odvíjí. Na setrvačku nepůsobí gravitace jako na kyvadlo, a proto jí houpání lodi nevadí. H4 měla vřetenový krok s diamantovými lopatkami a **remontoár**, malou pružinu natahovanou každých 7,5 s, aby krok dostával pořád stejnou sílu. Pozdější námořní chronometry měly pružinový zádržný krok (detent) a šnek (fusee).
 
-**Návrh:** `BalanceArt` (setrvačka ±150° a vlásek, jehož závity se spolu s ní stahují a povolují). Šla by vložit do lodi místo ciferníku, nebo vedle něj jako „pohled dovnitř“.
+**Nová animace** (`ChronometerArt`, komponenta `Balance` v `Mechanisms.jsx`): v pouzdře hodinek nad houpající se lodí je místo ciferníku vidět setrvačka (±150°) s vláskem, jehož závity se spolu s ní stahují a povolují. Loď se kolébá, ale setrvačka kmitá pořád stejně.
 
 ## 4. Slunce a stín — přepracováno
 
@@ -83,13 +83,13 @@ Návrhová větev `clock-mechanisms`. Živé náčrty s posuvníkem: `npm start`
 
 **Nová scéna** (`src/components/Sundial.jsx`, výpočet v `src/clocks/sundial.js`): **svislé jižní hodiny na zdi** pro Prahu ve dne rovnodennosti. Slunce je za divákem a jde zprava doleva, stín ukazatele padá dolů a ranní hodiny jsou vlevo. Hodinové čáry VII–V jsou spočítané podle tabulky (hlídá je test). Na ukazateli je uzel (nodus), jehož stín se ve dne rovnodennosti posouvá po vodorovné přímce (modrá čárkovaná). Proto je stín ráno a večer dlouhý a v poledne nejkratší, což sedí na text kapitoly. Posuvník pokrývá 7:00–17:00 slunečního času, protože dřív a později svítí slunce na zeď z boku nebo zezadu. Výstup ukazuje „sluneční čas“, který se od času na hodinkách liší o pár minut až čtvrt hodiny.
 
-## 5. Voda a písek — v pořádku, drobnost
+## 5. Voda a písek — upraven text
 
-Tvar horní nádoby (širší nahoře) odpovídá skutečné klepsydře z Karnaku: šikmé stěny vyrovnávají to, že se slábnoucím tlakem vody odtéká pomaleji. Text „voda odkapává pořád stejně rychle“ platí právě díky tomuto tvaru, mohl by to říct. Uvnitř karnacké nádoby bylo 12 sloupců rysek, jeden pro každý měsíc, protože noční hodiny měly během roku různou délku.
+Tvar horní nádoby (širší nahoře) odpovídá skutečné klepsydře z Karnaku: šikmé stěny vyrovnávají to, že se slábnoucím tlakem vody odtéká pomaleji. Text kapitoly teď vysvětluje, že šikmé stěny vyrovnávají slábnoucí proud vody. Uvnitř karnacké nádoby bylo 12 sloupců rysek, jeden pro každý měsíc, protože noční hodiny měly během roku různou délku.
 
-## 6. Křemen — jen návrh
+## 6. Křemen — přepracováno
 
-**Teď:** rozsvěcuje se displej. To je pěkné, ale mechanismus to neukazuje.
+**Bylo:** rozsvěcoval se displej. To je pěkné, ale mechanismus to neukazuje.
 
 **Doopravdy:**
 
@@ -98,11 +98,11 @@ Tvar horní nádoby (širší nahoře) odpovídá skutečné klepsydře z Karnak
   (2¹⁵ kmitů/s)                    děličky
 ```
 
-**Návrh:** chvějící se ladička (malá výchylka), pod ní řada 15 „půlicích“ políček, kde každé bliká poloviční rychlostí než předchozí, a na konci jeden tik za sekundu. Navazuje na fakt o 2¹⁵ ze stejné kapitoly.
+**Nová animace** (`QuartzArt`): nahoře se chvěje křemenná ladička (32 768 Hz), pod ní je řada 15 děliček. Každá se překlápí poloviční rychlostí než předchozí; rychlé děličky jsou rozmazané, protože blikají rychleji, než oko stihne. Poslední dělička (1 Hz) posouvá sekundy na displeji a bliká dvojtečkou. Navazuje na fakt o 2¹⁵ ze stejné kapitoly.
 
-## 7. Atomové hodiny — jen návrh
+## 7. Atomové hodiny — přepracováno
 
-**Teď:** planetární model atomu s kroužícími elektrony. Vypadá „atomově“, ale s principem hodin nesouvisí.
+**Bylo:** planetární model atomu s kroužícími elektrony. Vypadá „atomově“, ale s principem hodin nesouvisí.
 
 **Doopravdy (cesiový svazek):**
 
@@ -113,7 +113,7 @@ Tvar horní nádoby (širší nahoře) odpovídá skutečné klepsydře z Karnak
                          └──────── křemenný oscilátor se doladí podle signálu ◀─────┘
 ```
 
-**Návrh:** zleva doprava letí kuličky atomů. V dutině se ty „trefené“ přebarví a detektor je počítá. Číslo 9 192 631 770 se „zamyká“ jako teď, ale až když detektor chytá nejvíc atomů.
+**Nová animace** (`AtomArt`): z pícky letí atomy cesia přes třídicí magnet, mikrovlnnou dutinu a druhý magnet. Atomy „překlopené“ mikrovlnami zmodrají a druhý magnet je pošle nahoru do detektoru, ostatní odletí dolů. Jak se číslo 9 192 631 770 zleva „zamyká“, překlápí se víc atomů a detektor svítí víc. Čárkovaná šipka „doladění“ ukazuje zpětnou vazbu z detektoru do mikrovln.
 
 ## 8. Orloj — v pořádku
 
