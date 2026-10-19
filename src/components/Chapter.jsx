@@ -84,9 +84,9 @@ const QUARTZ_SECONDS = 9.99; // watch time that passes over the whole chapter
 function QuartzArt({ p }) {
   // The crystal fork hums 32 768 times a second; each divider stage flips at half the speed of the one
   // before it, the last flips once a second and steps the display (and blinks its colon).
-  const t = p * QUARTZ_SECONDS;
+  const t = Math.min(1, Math.max(0, p || 0)) * QUARTZ_SECONDS; // guard: any p outside 0–1 would put '-' or 'NaN' on the display
   const hum = 1.5 * Math.sin(p * 4000); // far too fast to see, so it just shimmers
-  const display = `000${Math.floor(t)}`;
+  const display = String(Math.floor(t)).padStart(4, '0');
   const colon = Math.floor(t * 2) % 2 === 0;
   return (
     <svg viewBox="0 0 200 220" className="w-full h-full">
@@ -109,7 +109,7 @@ function QuartzArt({ p }) {
 
       <rect x="20" y="112" width="160" height="96" rx="24" fill="#221F2B" stroke={INK} strokeWidth="3" />
       <rect x="34" y="128" width="132" height="64" rx="8" fill="#3A3646" stroke={INK} strokeWidth="3" />
-      {[...display.slice(-4)].map((digit, i) => (
+      {[...display].map((digit, i) => (
         <g key={i} transform={`translate(${44 + i * 30 + (i > 1 ? 12 : 0)} 137) scale(0.75 0.85)`}>
           {Object.entries(SEGMENTS).map(([name, [x, y, w, h]]) => (
             <rect key={name} x={x} y={y} width={w} height={h} rx="2" fill={DIGITS[digit].includes(name) ? '#FF7A5C' : '#4A4556'} />
