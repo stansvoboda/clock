@@ -13,9 +13,13 @@ export function useScrollProgress(ref) {
     let last = 0;
     const update = (time) => {
       const rect = ref.current.getBoundingClientRect();
-      const target = Math.min(1, Math.max(0, (innerHeight / 2 - rect.top) / rect.height));
+      // A zero-height element (not laid out yet) would divide by zero and give NaN, so treat it as not reached.
+      const target = rect.height > 0 ? Math.min(1, Math.max(0, (innerHeight / 2 - rect.top) / rect.height)) : 0;
       // Ease toward the target (~100 ms, independent of refresh rate) so mouse-wheel steps glide instead of jumping.
-      current = current === null ? target : current + (target - current) * (1 - Math.exp(-(time - last) / 100));
+      // The frame timestamp can be a little earlier than performance.now() taken in onScroll, so clamp the step:
+      // a negative one would push the factor below zero and overshoot past 0 or 1.
+      const step = Math.max(0, time - last);
+      current = current === null ? target : current + (target - current) * (1 - Math.exp(-step / 100));
       if (Math.abs(target - current) < 0.0005) current = target;
       last = time;
       setProgress(current);
